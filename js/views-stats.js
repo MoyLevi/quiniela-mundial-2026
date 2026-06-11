@@ -34,29 +34,48 @@ const fallos = picks.filter(p => {
     const mejorGanadores = [...ranking].sort((a,b) => b.ganadores - a.ganadores)[0];
     const masFallos = [...ranking].sort((a,b) => b.fallos - a.fallos)[0];
 
-    let aciertosPorPartido = {};
+    let efectividadPorPartido = {};
 
-    picks.forEach(p => {
+picks.forEach(p => {
 
-        const puntos = getPuntos(
-            partidos.find(x => x.id === p.partidoId) || {},
-            p
-        );
+    const partido = partidos.find(x => x.id === p.partidoId);
 
-        if(puntos > 0){
-            aciertosPorPartido[p.partidoId] = (aciertosPorPartido[p.partidoId] || 0) + 1;
-        }
+    if(!partido || !partidoFinalizado(partido)){
+        return;
+    }
 
-    });
+    const puntos = getPuntos(partido, p);
 
-    const partidoMasAciertosId = Object.entries(aciertosPorPartido)
-        .sort((a,b) => b[1] - a[1])[0]?.[0];
+    if(!efectividadPorPartido[p.partidoId]){
+        efectividadPorPartido[p.partidoId] = {
+            puntosGanados: 0,
+            picks: 0,
+            efectividad: 0
+        };
+    }
 
-    const partidoMasAciertos = partidos.find(p => p.id === Number(partidoMasAciertosId));
+    efectividadPorPartido[p.partidoId].puntosGanados += puntos;
+    efectividadPorPartido[p.partidoId].picks += 1;
+});
 
-    const totalAciertosPartido = partidoMasAciertosId
-        ? aciertosPorPartido[partidoMasAciertosId]
+Object.keys(efectividadPorPartido).forEach(idPartido => {
+    const item = efectividadPorPartido[idPartido];
+    const puntosDisponibles = item.picks * 3;
+
+    item.efectividad = puntosDisponibles > 0
+        ? item.puntosGanados / puntosDisponibles
         : 0;
+});
+
+const partidoMasAciertosId = Object.entries(efectividadPorPartido)
+    .sort((a,b) => b[1].efectividad - a[1].efectividad)[0]?.[0];
+
+const partidoMasAciertos = partidos.find(p => p.id === Number(partidoMasAciertosId));
+
+const totalAciertosPartido = partidoMasAciertosId
+    ? `${Math.round(efectividadPorPartido[partidoMasAciertosId].efectividad * 100)}%`
+    : "-";
+
 
     contenido.innerHTML = `
         <h1>DATOS <span class="titulo-acento">DESTACADOS</span></h1>
