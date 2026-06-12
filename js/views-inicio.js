@@ -94,11 +94,12 @@ function mostrarReglasPremios(){
 
         <p class="subtexto">Puedes hacer zoom con dos dedos en el celular.</p>
 
-        <div class="visor-reglas">
+        <div class="visor-reglas" id="visorReglas">
             <img 
                 src="img/reglas-premios.png" 
                 alt="Sistema de puntuación y premios"
                 class="img-reglas"
+                id="imgReglas"
             >
         </div>
 
@@ -108,6 +109,25 @@ function mostrarReglasPremios(){
 
         ${getFooterCopyright()}
     `;
+
+    setTimeout(() => {
+        const imagen = document.getElementById("imgReglas");
+        const visor = document.getElementById("visorReglas");
+
+        if(imagen && visor && window.Panzoom){
+            const panzoom = Panzoom(imagen, {
+                maxScale: 5,
+                minScale: 1,
+                contain: "outside"
+            });
+
+            visor.addEventListener("wheel", panzoom.zoomWithWheel);
+
+            visor.addEventListener("pointerdown", () => {
+                visor.style.touchAction = "none";
+            });
+        }
+    }, 100);
 
     window.scrollTo({
         top: 0,
