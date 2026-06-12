@@ -32,6 +32,13 @@ function mostrarInicio(){
             </button>
         </div>
 
+        <div class="reglas-card">
+            <h2>🏆 REGLAS Y PREMIOS</h2>
+            <p>Consulta el sistema de puntuación completo de la quiniela.</p>
+            <button onclick="mostrarReglasPremios()">Ver infografía</button>
+        </div>
+
+
         <div class="inicio-grid">
             <div class="inicio-card">
                 <h2>${usuarios.length}</h2>
@@ -76,4 +83,34 @@ function mostrarInicio(){
 
         ${getFooterCopyright()}
     `;
+}
+
+function mostrarReglasPremios(){
+
+    contenido.innerHTML = `
+        <button onclick="mostrarInicio()" class="btnVolver">⬅ Regresar</button>
+
+        <h1>REGLAS <span class="titulo-acento">Y PREMIOS</span></h1>
+
+        <p class="subtexto">Puedes hacer zoom con dos dedos en el celular.</p>
+
+        <div class="visor-reglas">
+            <img 
+                src="img/reglas-premios.png" 
+                alt="Sistema de puntuación y premios"
+                class="img-reglas"
+            >
+        </div>
+
+        <a class="btn-descargar-reglas" href="img/reglas-premios.png" download>
+            📥 Descargar imagen
+        </a>
+
+        ${getFooterCopyright()}
+    `;
+
+    window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+    });
 }
