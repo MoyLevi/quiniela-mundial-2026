@@ -706,19 +706,20 @@
 
 .visor-reglas{
     max-width:1000px;
+    height:75vh;
     margin:25px auto;
-    overflow:auto;
+    overflow:hidden;
     border-radius:18px;
     background:#020617;
     padding:10px;
     box-shadow:0 8px 20px rgba(0,0,0,.35);
-    touch-action:pinch-zoom;
+    touch-action:none;
 }
 
 .img-reglas{
     width:100%;
-    max-width:none;
     height:auto;
     display:block;
     border-radius:12px;
+    cursor:grab;
 }
