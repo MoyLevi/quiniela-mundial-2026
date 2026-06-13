@@ -32,6 +32,143 @@ function crearHTMLRanking(lista){
     }).join("");
 }
 
+
+function getPartidoMayorEfectividad(){
+
+    let efectividadPorPartido = {};
+
+    picks.forEach(p => {
+
+        const partido = partidos.find(x => x.id === p.partidoId);
+
+        if(!partido || !partidoFinalizado(partido)){
+            return;
+        }
+
+        const puntos = getPuntos(partido, p);
+
+        if(!efectividadPorPartido[p.partidoId]){
+            efectividadPorPartido[p.partidoId] = {
+                puntosGanados: 0,
+                picks: 0,
+                efectividad: 0
+            };
+        }
+
+        efectividadPorPartido[p.partidoId].puntosGanados += puntos;
+        efectividadPorPartido[p.partidoId].picks += 1;
+    });
+
+    Object.keys(efectividadPorPartido).forEach(idPartido => {
+        const item = efectividadPorPartido[idPartido];
+        const puntosDisponibles = item.picks * 3;
+
+        item.efectividad = puntosDisponibles > 0
+            ? item.puntosGanados / puntosDisponibles
+            : 0;
+    });
+
+    const partidoId = Object.entries(efectividadPorPartido)
+        .sort((a,b) => b[1].efectividad - a[1].efectividad)[0]?.[0];
+
+    if(!partidoId){
+        return null;
+    }
+
+    const partido = partidos.find(p => p.id === Number(partidoId));
+    const item = efectividadPorPartido[partidoId];
+
+    if(!partido){
+        return null;
+    }
+
+    return {
+        partido,
+        porcentaje: Math.round(item.efectividad * 100),
+        puntosGanados: item.puntosGanados,
+        puntosDisponibles: item.picks * 3
+    };
+}
+
+function crearHTMLRecordCard(icono, titulo, valor, detalle = ""){
+    return `
+        <div class="record-card">
+            <div class="record-icono">${icono}</div>
+
+            <div class="record-info">
+                <span>${titulo}</span>
+                <strong>${valor}</strong>
+                ${detalle ? `<small>${detalle}</small>` : ""}
+            </div>
+        </div>
+    `;
+}
+
+function crearHTMLRecordsTabla(){
+
+    const ranking = getRanking();
+
+    const liderGeneral = [...ranking].sort((a,b) => b.puntos - a.puntos)[0];
+    const mejorExactos = [...ranking].sort((a,b) => b.exactos - a.exactos)[0];
+    const mejorGanadores = [...ranking].sort((a,b) => b.ganadores - a.ganadores)[0];
+    const mejorDiferencias = [...ranking].sort((a,b) => b.diferencias - a.diferencias)[0];
+    const partidoMayorEfectividad = getPartidoMayorEfectividad();
+
+    return `
+        <h1>RÉCORDS <span class="titulo-acento">ACTUALES</span></h1>
+        <p class="subtexto">Líderes y marcas destacadas de la quiniela.</p>
+
+        <div class="tabs-tabla">
+            <button onclick="mostrarTabla('principal')">🏆 Principal</button>
+            <button onclick="mostrarTabla('recreativa')">🎮 Recreativa</button>
+            <button class="tab-activa" onclick="mostrarTabla('records')">📈 Récords</button>
+        </div>
+
+        <div class="records-grid">
+            ${crearHTMLRecordCard(
+                "👑",
+                "Líder general",
+                liderGeneral ? `${liderGeneral.nombre} · ${liderGeneral.puntos} pts` : "-",
+                "Mayor puntaje acumulado"
+            )}
+
+            ${crearHTMLRecordCard(
+                "🎯",
+                "Más marcadores exactos",
+                mejorExactos ? `${mejorExactos.nombre} · ${mejorExactos.exactos}` : "-",
+                "Marcadores de 3 puntos"
+            )}
+
+            ${crearHTMLRecordCard(
+                "✅",
+                "Más ganadores",
+                mejorGanadores ? `${mejorGanadores.nombre} · ${mejorGanadores.ganadores}` : "-",
+                "Aciertos de ganador"
+            )}
+
+            ${crearHTMLRecordCard(
+                "📐",
+                "Más diferencia + ganador",
+                mejorDiferencias ? `${mejorDiferencias.nombre} · ${mejorDiferencias.diferencias}` : "-",
+                "Aciertos de 2 puntos"
+            )}
+
+            ${crearHTMLRecordCard(
+                "🔥",
+                "Partido con mayor efectividad",
+                partidoMayorEfectividad
+                    ? `${partidoMayorEfectividad.partido.local} vs ${partidoMayorEfectividad.partido.visita} · ${partidoMayorEfectividad.porcentaje}%`
+                    : "-",
+                partidoMayorEfectividad
+                    ? `${partidoMayorEfectividad.puntosGanados}/${partidoMayorEfectividad.puntosDisponibles} pts posibles`
+                    : "Solo partidos finalizados"
+            )}
+        </div>
+
+        ${getFooterCopyright()}
+    `;
+}
+
 function mostrarTabla(tipo = "principal"){
 
     window.scrollTo({
@@ -40,6 +177,11 @@ function mostrarTabla(tipo = "principal"){
     });
 
     tipoTablaActual = tipo;
+
+    if(tipo === "records"){
+        contenido.innerHTML = crearHTMLRecordsTabla();
+        return;
+    }
 
     const ranking = getRanking();
     const rankingPagados = ranking.filter(u => u.paga === true);
@@ -73,6 +215,13 @@ function mostrarTabla(tipo = "principal"){
             >
                 🎮 Recreativa
             </button>
+
+            <button 
+                class="${tipo === "records" ? "tab-activa" : ""}" 
+                onclick="mostrarTabla('records')"
+            >
+                📈 Récords
+            </button>
         </div>
 
         <p class="subtexto">Toca un usuario para ver cómo se formaron sus puntos.</p>
@@ -89,19 +238,112 @@ function getTextoEspecial(valor){
     return valor && valor.trim() !== "" ? valor : "Sin pick";
 }
 
-function crearHTMLPicksEspecialesUsuario(usuario){
+function crearHTMLPaisConBandera(nombre){
+
+    const pais = (nombre || "").trim();
+
+    if(!pais || pais === "-"){
+        return `<span>-</span>`;
+    }
+
     return `
-        <div class="picks-especiales-usuario">
-            <div><strong>🏆 Campeón</strong><span>${getTextoEspecial(usuario?.campeon)}</span></div>
-            <div><strong>🥈 Segundo</strong><span>${getTextoEspecial(usuario?.segundo)}</span></div>
-            <div><strong>🥉 Tercero</strong><span>${getTextoEspecial(usuario?.tercero)}</span></div>
-            <div><strong>⚽ Goleador</strong><span>${getTextoEspecial(usuario?.goleador)}</span></div>
-            <div><strong>🌟 Sorpresa</strong><span>${getTextoEspecial(usuario?.sorpresa)}</span></div>
+        <span class="pais-con-bandera">
+            <img src="${getFlag(pais)}" alt="${pais}" class="flag-mini">
+            <span>${pais}</span>
+        </span>
+    `;
+}
+
+function crearHTMLPicksEspecialesUsuario(usuario){
+
+    return `
+        <div class="picks-especiales-usuario picks-especiales-grid-compacto">
+            <div class="pick-especial-usuario-card">
+                <strong>🏆 Campeón</strong>
+                <span>${getTextoEspecial(usuario?.campeon)}</span>
+            </div>
+
+            <div class="pick-especial-usuario-card">
+                <strong>🥈 Segundo</strong>
+                <span>${getTextoEspecial(usuario?.segundo)}</span>
+            </div>
+
+            <div class="pick-especial-usuario-card">
+                <strong>🥉 Tercero</strong>
+                <span>${getTextoEspecial(usuario?.tercero)}</span>
+            </div>
+
+            <div class="pick-especial-usuario-card pick-especial-largo">
+                <strong>⚽ Goleador</strong>
+                <span>${getTextoEspecial(usuario?.goleador)}</span>
+            </div>
+
+            <div class="pick-especial-usuario-card pick-especial-largo">
+                <strong>🌟 Sorpresa</strong>
+                <span>${getTextoEspecial(usuario?.sorpresa)}</span>
+            </div>
         </div>
     `;
 }
 
-function verDetalleUsuario(idUser, pagina = 1, scrollPronosticos = false){
+function crearHTMLClasificadosUsuario(idUser){
+
+    const lista = lugaresPro.filter(x => x.idUsuario === idUser);
+
+    if(lista.length === 0){
+        return `<p class="subtexto">Este usuario todavía no tiene picks de clasificados.</p>`;
+    }
+
+    const grupos = "ABCDEFGHIJKL".split("");
+
+    return `
+        <div class="clasificados-grid">
+            ${grupos.map(g => {
+
+                const primero = lista.find(x => x.lug === `${g}1`)?.lugares || "-";
+                const segundo = lista.find(x => x.lug === `${g}2`)?.lugares || "-";
+
+                return `
+                    <div class="clasificado-card">
+                        <h3>Grupo ${g}</h3>
+                        <p><strong>1°</strong> ${crearHTMLPaisConBandera(primero)}</p>
+                        <p><strong>2°</strong> ${crearHTMLPaisConBandera(segundo)}</p>
+                    </div>
+                `;
+            }).join("")}
+        </div>
+    `;
+}
+
+function crearHTMLTabsDetalleUsuario(idUser, vista){
+
+    return `
+        <div class="tabs-detalle-usuario">
+            <button 
+                class="${vista === "partidos" ? "tab-activa" : ""}"
+                onclick="verDetalleUsuario(${idUser}, 1, false, 'partidos')"
+            >
+                🎯 Partidos
+            </button>
+
+            <button 
+                class="${vista === "clasificados" ? "tab-activa" : ""}"
+                onclick="verDetalleUsuario(${idUser}, 1, false, 'clasificados')"
+            >
+                🏆 Clasificados
+            </button>
+
+            <button 
+                class="${vista === "especiales" ? "tab-activa" : ""}"
+                onclick="verDetalleUsuario(${idUser}, 1, false, 'especiales')"
+            >
+                ⭐ Especiales
+            </button>
+        </div>
+    `;
+}
+
+function verDetalleUsuario(idUser, pagina = 1, scrollPronosticos = false, vista = "partidos"){
 
     const usuarioActual = usuarios.find(u => u.id === idUser);
     const nombre = usuarioActual ? usuarioActual.nombre : `Usuario ${idUser}`;
@@ -115,15 +357,13 @@ function verDetalleUsuario(idUser, pagina = 1, scrollPronosticos = false){
     const inicio = (paginaSegura - 1) * picksPorPagina;
     const fin = inicio + picksPorPagina;
     const listaPagina = lista.slice(inicio, fin);
-    
+
     const resumen = getResumenUsuario(idUser);
 
     let html = `
         <button onclick="mostrarTabla(tipoTablaActual)" class="btnVolver">⬅ Volver</button>
 
         <h1>👤 ${nombre}</h1>
-
-        ${crearHTMLPicksEspecialesUsuario(usuarioActual)}
 
         <div class="resumen-usuario">
             <div><strong>${resumen.puntos}</strong><span>Puntos</span></div>
@@ -133,83 +373,110 @@ function verDetalleUsuario(idUser, pagina = 1, scrollPronosticos = false){
             <div><strong>${resumen.fallos}</strong><span>Fallos</span></div>
         </div>
 
-        <h2 id="tituloPronosticos">
-            DESGLOSE <span class="titulo-acento">DE PRONÓSTICOS</span>
-        </h2>
+        ${crearHTMLTabsDetalleUsuario(idUser, vista)}
     `;
 
-    if(lista.length === 0){
-        html += `<p>Este usuario todavía no tiene pronósticos.</p>`;
-    }
-
-    listaPagina.forEach(r => {
-
-        const partido = partidos.find(p => p.id === r.partidoId);
-        if(!partido) return;
-
-        const jugado = partidoFinalizado(partido);
-        const puntos = jugado ? getPuntos(partido, r) : 0;
-
-        let textoPuntos = "-";
-        let tipo = "Por jugar";
-        let clasePuntos = "pts-pendiente";
-
-        if(jugado){
-            textoPuntos = `${puntos} pts`;
-
-            if(puntos === 3){
-                tipo = "Marcador exacto";
-                clasePuntos = "pts-exacto";
-            }
-            else if(puntos === 2){
-                tipo = "Diferencia + ganador";
-                clasePuntos = "pts-diferencia";
-            }
-            else if(puntos === 1){
-                tipo = "Ganador";
-                clasePuntos = "pts-ganador";
-            }
-            else{
-                tipo = "Fallo";
-                clasePuntos = "pts-fallo";
-            }
-        }
+    if(vista === "especiales"){
 
         html += `
-            <div class="usuario-pronostico">
-                <div>
-                    <strong>${partido.local} vs ${partido.visita}</strong>
-                    <p>${partido.fecha} · ${partido.hora}</p>
-                    <p>Real: ${partido.golesLoc !== "" && partido.golesVis !== "" ? `${partido.golesLoc}-${partido.golesVis}` : "Pendiente"} · Pick: ${r.golLoc}-${r.golVis}</p>
-                </div>
+            <h2 id="tituloPronosticos">
+                PICKS <span class="titulo-acento">ESPECIALES</span>
+            </h2>
 
-                <div class="usuario-score ${clasePuntos}">
-                    ${textoPuntos}
-                    <span>${tipo}</span>
+            ${crearHTMLPicksEspecialesUsuario(usuarioActual)}
+        `;
+    }
+    else if(vista === "clasificados"){
+
+        html += `
+            <h2 id="tituloPronosticos">
+                PICKS <span class="titulo-acento">DE CLASIFICADOS</span>
+            </h2>
+
+            ${crearHTMLClasificadosUsuario(idUser)}
+        `;
+    }
+    else{
+
+        html += `
+            <h2 id="tituloPronosticos">
+                DESGLOSE <span class="titulo-acento">DE PRONÓSTICOS</span>
+            </h2>
+        `;
+
+        if(lista.length === 0){
+            html += `<p>Este usuario todavía no tiene pronósticos.</p>`;
+        }
+
+        listaPagina.forEach(r => {
+
+            const partido = partidos.find(p => p.id === r.partidoId);
+            if(!partido) return;
+
+            const jugado = partidoFinalizado(partido);
+            const puntos = jugado ? getPuntos(partido, r) : 0;
+
+            let textoPuntos = "-";
+            let tipo = "Por jugar";
+            let clasePuntos = "pts-pendiente";
+
+            if(jugado){
+                textoPuntos = `${puntos} pts`;
+
+                if(puntos === 3){
+                    tipo = "Marcador exacto";
+                    clasePuntos = "pts-exacto";
+                }
+                else if(puntos === 2){
+                    tipo = "Diferencia + ganador";
+                    clasePuntos = "pts-diferencia";
+                }
+                else if(puntos === 1){
+                    tipo = "Ganador";
+                    clasePuntos = "pts-ganador";
+                }
+                else{
+                    tipo = "Fallo";
+                    clasePuntos = "pts-fallo";
+                }
+            }
+
+            html += `
+                <div class="usuario-pronostico">
+                    <div>
+                        <strong>${partido.local} vs ${partido.visita}</strong>
+                        <p>${partido.fecha} · ${partido.hora}</p>
+                        <p>Real: ${partido.golesLoc !== "" && partido.golesVis !== "" ? `${partido.golesLoc}-${partido.golesVis}` : "Pendiente"} · Pick: ${r.golLoc}-${r.golVis}</p>
+                    </div>
+
+                    <div class="usuario-score ${clasePuntos}">
+                        ${textoPuntos}
+                        <span>${tipo}</span>
+                    </div>
                 </div>
+            `;
+        });
+
+        html += `
+            <div class="paginacion">
+                <button 
+                    onclick="verDetalleUsuario(${idUser}, ${paginaSegura - 1}, true, 'partidos')" 
+                    ${paginaSegura <= 1 ? "disabled" : ""}
+                >
+                    ⬅ Anterior
+                </button>
+
+                <span>Página ${paginaSegura} de ${totalPaginas}</span>
+
+                <button 
+                    onclick="verDetalleUsuario(${idUser}, ${paginaSegura + 1}, true, 'partidos')" 
+                    ${paginaSegura >= totalPaginas ? "disabled" : ""}
+                >
+                    Siguiente ➡
+                </button>
             </div>
         `;
-    });
-
-    html += `
-        <div class="paginacion">
-            <button 
-                onclick="verDetalleUsuario(${idUser}, ${paginaSegura - 1}, true)" 
-                ${paginaSegura <= 1 ? "disabled" : ""}
-            >
-                ⬅ Anterior
-            </button>
-
-            <span>Página ${paginaSegura} de ${totalPaginas}</span>
-
-            <button 
-                onclick="verDetalleUsuario(${idUser}, ${paginaSegura + 1}, true)" 
-                ${paginaSegura >= totalPaginas ? "disabled" : ""}
-            >
-                Siguiente ➡
-            </button>
-        </div>
-    `;
+    }
 
     html += getFooterCopyright();
     contenido.innerHTML = html;
@@ -228,4 +495,5 @@ function verDetalleUsuario(idUser, pagina = 1, scrollPronosticos = false){
             }
 
         }, 50);
-}}
+    }
+}
