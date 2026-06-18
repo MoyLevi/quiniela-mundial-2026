@@ -167,6 +167,16 @@
 
 /* BOTONES */
 
+.balon-app{
+    display:inline-block;
+    width:1.15em;
+    height:1.15em;
+    object-fit:contain;
+    vertical-align:-0.18em;
+    line-height:1;
+    filter:drop-shadow(0 2px 4px rgba(0,0,0,.35));
+}
+
 .btnVolver{
     background:#334155;
     color:white;
@@ -197,23 +207,29 @@
 }
 
 .btn-refresh{
-    background:#0f172a;
+    background:#1e293b;
     color:white;
-    border:none;
+    border:1px solid rgba(56,189,248,.35);
     border-radius:12px;
     padding:10px 18px;
     font-weight:bold;
     cursor:pointer;
     transition:.2s;
+    box-shadow:0 8px 20px rgba(0,0,0,.22), inset 0 0 0 1px rgba(255,255,255,.03);
 }
 
 .btn-refresh:hover{
-    background:#1e293b;
+    background:#27364d;
     transform:scale(1.03);
 }
 
+.btn-refresh:active{
+    background:#334155;
+    transform:scale(.99);
+}
+
 .btn-refresh:disabled{
-    opacity:.7;
+    opacity:.85;
     cursor:not-allowed;
 }
 
@@ -324,9 +340,13 @@
 }
 
 .ranking-mov{
-    width:28px;
+    width:34px;
     text-align:center;
-    font-size:18px;
+    font-size:26px;
+    font-weight:900;
+    line-height:1;
+    transform:scaleX(1.25);
+    flex-shrink:0;
 }
 
 .mov-up{
@@ -1459,4 +1479,471 @@
     .grupo-standings-card{
         padding:14px;
     }
+}
+
+/* KNOCKOUT / PENALES */
+.penales-circulos{
+    color:#22c55e;
+    letter-spacing:1px;
+    font-size:.72em;
+    white-space:nowrap;
+}
+
+.marcador-penales{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:5px;
+    flex-wrap:wrap;
+    line-height:1.25;
+}
+
+.usuario-pronostico-ko{
+    border-left:4px solid #38bdf8;
+}
+
+.pts-ko{
+    color:#38bdf8;
+}
+
+/* v2.8.0 KO Upgrade */
+.penales-numero{
+    color:#22c55e;
+    font-size:.72em;
+    font-weight:800;
+    line-height:1;
+    min-width:.8em;
+    display:inline-block;
+    text-align:center;
+}
+
+.marcador-goles{
+    display:inline-block;
+}
+
+.pasa-partido,
+.pasa-detalle{
+    font-size:.72rem;
+    color:#94a3b8;
+    margin-top:4px;
+}
+
+.pasa-partido .pais-con-bandera,
+.pasa-detalle .pais-con-bandera{
+    justify-content:center;
+}
+
+.ranking-ko-card{
+    grid-template-columns:48px minmax(120px, 1fr) minmax(150px, auto) 86px;
+}
+
+.ranking-ko-breakdown{
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+    font-size:.72rem;
+    color:#cbd5e1;
+    text-align:left;
+}
+
+.clasificados-resumen-usuario{
+    max-width:680px;
+    margin:12px auto 18px;
+    background:#0f172a;
+    border:1px solid rgba(148,163,184,.25);
+    border-radius:16px;
+    padding:14px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+}
+
+.clasificados-resumen-usuario strong{
+    color:#22c55e;
+    font-size:1.35rem;
+}
+
+.clasificados-comparacion-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(190px, 1fr));
+    gap:12px;
+    max-width:980px;
+    margin:0 auto;
+}
+
+.clasificado-ok{
+    border:1px solid rgba(34,197,94,.45);
+}
+
+.clasificado-error{
+    border:1px solid rgba(248,113,113,.35);
+}
+
+.clasificado-resultado{
+    margin-top:8px;
+    font-weight:800;
+}
+
+.clasificados-reales-card{
+    border:1px solid rgba(34,197,94,.25);
+}
+
+.ko-grid button{
+    min-width:72px;
+}
+
+@media(max-width:700px){
+    .ranking-ko-card{
+        grid-template-columns:40px 1fr 74px;
+    }
+
+    .ranking-ko-breakdown{
+        grid-column:2 / -1;
+        flex-direction:row;
+        flex-wrap:wrap;
+        gap:8px;
+    }
+}
+
+/* v2.8.1 Ajustes KO y Clasificados */
+.subtabs-desglose{
+    margin-top:6px;
+    margin-bottom:14px;
+}
+
+.grupos-clasificados-usuario{
+    max-width:720px;
+    margin:12px auto 16px;
+}
+
+.clasificados-resumen-grupo{
+    background:#111827;
+    border-color:rgba(34,197,94,.35);
+}
+
+/* v2.8.2 ajustes KO */
+.marcador-penales{
+    flex-wrap:nowrap;
+    white-space:nowrap;
+}
+
+.marcador-detalle .marcador-penales{
+    gap:8px;
+}
+
+.marcador-detalle .penales-numero{
+    font-size:.58em;
+    vertical-align:middle;
+}
+
+.pts-semaforo-0{ color:#ef4444; }
+.pts-semaforo-1{ color:#f97316; }
+.pts-semaforo-2{ color:#fb923c; }
+.pts-semaforo-3{ color:#facc15; }
+.pts-semaforo-4{ color:#fde047; }
+.pts-semaforo-5{ color:#bef264; }
+.pts-semaforo-6{ color:#84cc16; }
+.pts-semaforo-7{ color:#22c55e; }
+.pts-semaforo-8{ color:#16a34a; }
+
+.clasificado-card.pts-semaforo-0{ border-color:rgba(239,68,68,.55); }
+.clasificado-card.pts-semaforo-1{ border-color:rgba(249,115,22,.50); }
+.clasificado-card.pts-semaforo-2{ border-color:rgba(251,146,60,.50); }
+.clasificado-card.pts-semaforo-3{ border-color:rgba(250,204,21,.50); }
+.clasificado-card.pts-semaforo-4{ border-color:rgba(253,224,71,.60); }
+.clasificado-card.pts-semaforo-5{ border-color:rgba(190,242,100,.50); }
+.clasificado-card.pts-semaforo-6{ border-color:rgba(132,204,22,.50); }
+.clasificado-card.pts-semaforo-7{ border-color:rgba(34,197,94,.55); }
+.clasificado-card.pts-semaforo-8{ border-color:rgba(22,163,74,.65); }
+
+.clave-clasificado-real{
+    display:inline-block;
+    margin-right:8px;
+}
+
+
+/* v2.8.3 ajustes: penales laterales, standings clasificados y orden */
+.marcador-detalle > .status-partido{
+    display:block;
+    margin-top:8px;
+    font-size:14px;
+    color:#cbd5e1;
+}
+
+.marcador-detalle .marcador-penales{
+    display:inline-flex !important;
+    align-items:center;
+    justify-content:center;
+    flex-direction:row !important;
+    flex-wrap:nowrap !important;
+    gap:8px;
+    white-space:nowrap;
+}
+
+.marcador-detalle .marcador-penales .penales-numero{
+    display:inline-flex !important;
+    align-items:center;
+    justify-content:center;
+    margin:0;
+    color:#22c55e !important;
+    font-size:.58em;
+    font-weight:900;
+    line-height:1;
+}
+
+.marcador-detalle .marcador-penales .marcador-goles{
+    display:inline-block !important;
+    white-space:nowrap;
+}
+
+.ranking-clasificados-card{
+    grid-template-columns:48px minmax(120px, 1fr) minmax(170px, auto) 86px;
+}
+
+@media(max-width:700px){
+    .ranking-clasificados-card{
+        grid-template-columns:40px 1fr 74px;
+    }
+
+    .ranking-clasificados-card .ranking-ko-breakdown{
+        grid-column:2 / -1;
+        flex-direction:row;
+        flex-wrap:wrap;
+        gap:8px;
+    }
+}
+
+/* v2.8.4 mejoras: standings compactos, terceros y resumen stage 2 */
+.tabs-tabla-principal{
+    margin-bottom:8px;
+}
+
+.tabs-tabla-secundaria{
+    margin-top:0;
+    transform:scale(.96);
+    transform-origin:center top;
+}
+
+.tabs-tabla-secundaria button{
+    font-size:13px;
+    padding:9px 12px;
+}
+
+.equipo-clasificado-row{
+    background:linear-gradient(90deg, rgba(34,197,94,.20), rgba(30,41,59,.55));
+    border-left:4px solid #22c55e;
+}
+
+.equipo-clasificado-row .equipo-grupo-nombre{
+    font-weight:900;
+}
+
+.resumen-usuario-stage2{
+    max-width:980px;
+}
+
+.resumen-usuario-stage2 .resumen-card-principal{
+    border-top:3px solid #38bdf8;
+    background:linear-gradient(180deg, #1e293b, #0f172a);
+}
+
+.resumen-usuario-stage2 .resumen-card-secundario{
+    border-top:3px solid #f59e0b;
+    background:linear-gradient(180deg, #292524, #0f172a);
+}
+
+.resumen-usuario-stage2 .resumen-card-principal strong{
+    color:#e0f2fe;
+}
+
+.resumen-usuario-stage2 .resumen-card-secundario strong{
+    color:#fde68a;
+}
+
+/* v2.8.4 fix definitivo marcador KO con penales en detalle */
+.marcador-detalle > div{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.marcador-detalle > div > .marcador-penales{
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    flex-direction:row !important;
+    flex-wrap:nowrap !important;
+    gap:10px !important;
+    margin:0 !important;
+    white-space:nowrap !important;
+    line-height:1 !important;
+}
+
+.marcador-detalle > div > .marcador-penales .marcador-goles{
+    display:inline-block !important;
+    margin:0 !important;
+    font-size:38px !important;
+    color:#f8fafc !important;
+    font-weight:900 !important;
+    line-height:1 !important;
+}
+
+.marcador-detalle > div > .marcador-penales .penales-numero{
+    display:inline-block !important;
+    margin:0 !important;
+    font-size:22px !important;
+    color:#22c55e !important;
+    font-weight:900 !important;
+    line-height:1 !important;
+    vertical-align:middle !important;
+}
+
+
+/* v2.8.7 ajustes Léeme, Clasificados y KO compacto */
+.acciones-inicio-botones{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:12px;
+    flex-wrap:wrap;
+}
+
+.btn-leeme{
+    background:#dc2626 !important;
+    color:white !important;
+    border:none;
+    padding:13px 22px !important;
+    border-radius:14px;
+    cursor:pointer;
+    font-weight:800;
+    box-shadow:0 8px 20px rgba(220,38,38,.25);
+    font-size:15px;
+}
+
+.btn-leeme:hover{
+    background:#ef4444 !important;
+    transform:scale(1.03);
+}
+
+.leeme-card{
+    max-width:900px;
+    margin:25px auto;
+    background:#0f172a;
+    border:1px solid rgba(239,68,68,.45);
+    border-radius:18px;
+    padding:22px;
+    box-shadow:0 8px 20px rgba(0,0,0,.35);
+    color:#e5e7eb;
+    line-height:1.55;
+    font-size:16px;
+}
+
+.ranking-clasificados-card .ranking-puntos,
+.ranking-puntos-clasificados{
+    color:white !important;
+}
+
+.texto-grupo-clasificados{
+    color:#facc15;
+}
+
+.texto-puntos-clasificados{
+    font-weight:900;
+}
+
+.linea-ko-compacta{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    flex-wrap:wrap;
+}
+
+.bandera-solo{
+    display:inline-block;
+    width:22px;
+    height:16px;
+    object-fit:cover;
+    border-radius:3px;
+    vertical-align:middle;
+    box-shadow:0 1px 4px rgba(0,0,0,.25);
+}
+
+.bandera-placeholder{
+    width:auto;
+    height:auto;
+    box-shadow:none;
+    color:#94a3b8;
+}
+
+.usuario-score span{
+    max-width:92px;
+    text-align:center;
+    line-height:1.05;
+}
+
+
+/* v2.8.8 botón Léeme arriba del logotipo */
+.acciones-leeme-top{
+    margin: 12px 0 26px;
+    padding-bottom: 8px;
+}
+
+.acciones-leeme-top .btn-leeme{
+    min-width: 145px;
+}
+
+
+.texto-grupo-clasificados-blanco{
+    color:#ffffff !important;
+}
+
+.ranking-puntos span{
+    display:block;
+    font-size:11px;
+    line-height:1.1;
+    opacity:.9;
+    font-weight:700;
+}
+
+.balon-menu{
+    width:1.05em;
+    height:1.05em;
+    margin-right:4px;
+}
+
+.stats-clasificados-titulo-blanco{
+    color:#facc15 !important;
+}
+
+.ranking-puntos-inline span{
+    display:inline;
+    font-size:inherit;
+    line-height:inherit;
+    opacity:1;
+}
+
+/* v2.9.2: Especiales en solo dos líneas: Campeón y Goleador */
+.ranking-user-especiales .especial-linea{
+    display:block;
+}
+
+.ranking-user-especiales .pais-con-bandera{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    margin-left:4px;
+    vertical-align:middle;
+}
+
+.ranking-user-especiales .pais-con-bandera span{
+    display:inline;
+    margin-top:0;
+    color:#cbd5e1;
+    font-size:13px;
+}
+
+.ranking-user-especiales .pais-con-bandera .flag-mini{
+    display:inline-block;
+    margin-right:0;
 }

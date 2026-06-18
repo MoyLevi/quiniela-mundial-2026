@@ -126,3 +126,10 @@
         grid-template-columns:1fr;
     }
 }
+
+@media(max-width:600px){
+    .ranking-mov{
+        width:30px;
+        font-size:22px;
+    }
+}
