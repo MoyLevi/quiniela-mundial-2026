@@ -1078,8 +1078,8 @@ function mostrarTabla(tipo = "principal", grupo = "A", hacerScroll = true){
         : `STANDINGS <span class="titulo-acento">RECREATIVA</span>`;
 
     const descripcion = tipo === "principal"
-        ? "Solo usuarios con pago registrado. Suma únicamente Fase de Grupos + KO."
-        : "Incluye a todos los usuarios. Suma únicamente Fase de Grupos + KO.";
+        ? "Solo usuarios con pago registrado."
+        : "Incluye a todos los usuarios.";
 
     contenido.innerHTML = `
         <h1>${titulo}</h1>
