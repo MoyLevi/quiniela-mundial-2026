@@ -28,6 +28,11 @@ const categoriasEspeciales = {
         titulo: "Clasificados",
         icono: "🏆",
         campo: null
+    },
+    records: {
+        titulo: "Récords",
+        icono: "🏆",
+        campo: null
     }
 };
 
@@ -125,12 +130,36 @@ function crearHTMLBotonesVistaEspecial(categoria, vistaActiva){
             >
                 👥 Picks por Usuario
             </button>
+
+            ${categoria === "goleador" ? `
+                <button
+                    class="${vistaActiva === "standing" ? "tab-activa" : ""}"
+                    onclick="mostrarEstadisticas('${categoria}', 'standing', grupoClasificadosActual, true)"
+                >
+                    🏅 Standing
+                </button>
+            ` : ""}
         </div>
     `;
 }
 
+function crearHTMLStandingGoleador(){
+    return `
+        <div class="especial-panel">
+            <h3>Standing Goleador</h3>
+            ${Array.from({length:10}, (_, i) => `
+                <div class="especial-row especial-row-conteo">
+                    <span>${i + 1}. (Por Definir)</span>
+                    <strong>0 goles</strong>
+                </div>
+            `).join("")}
+        </div>
+    `;
+}
+
+
 function getLugaresProGrupos(){
-    return lugaresPro.filter(x => /^[A-L][12]$/.test(x.lug));
+    return getLugaresProComparables();
 }
 
 function contarValores(lista, selector){
@@ -181,6 +210,73 @@ function crearHTMLBotonesGruposClasificados(grupoActivo){
     `;
 }
 
+function crearHTMLClasificadosRealesGrupo(grupo){
+    const reales = getClasificadosReales().filter(x => x.grupo === grupo);
+
+    return `
+        <div class="clasificado-comunidad-card clasificados-reales-card">
+            <h3 class="stats-clasificados-titulo-blanco">Clasificados</h3>
+            <p class="subtexto">Equipos Clasificados Reales</p>
+            ${reales.map(r => `
+                <div class="clasificado-comunidad-row">
+                    <span><strong class="clave-clasificado-real">${r.clave}</strong> ${crearHTMLPaisConBandera(r.equipo)}</span>
+                    <strong>${r.lugar}°</strong>
+                </div>
+            `).join("")}
+        </div>
+    `;
+}
+
+function getResumenComparacionClasificados(){
+    const picksComparables = getLugaresProComparables();
+    const porUsuario = {};
+
+    picksComparables.forEach(pick => {
+        const real = getClasificadoRealPorClave(pick.claveNormal);
+        const acierto = real && normalizarNombreEquipo(real.equipo) === normalizarNombreEquipo(pick.lugares);
+
+        if(!porUsuario[pick.idUsuario]){
+            porUsuario[pick.idUsuario] = {
+                id: pick.idUsuario,
+                total: 0,
+                aciertos: 0
+            };
+        }
+
+        porUsuario[pick.idUsuario].total += 1;
+        porUsuario[pick.idUsuario].aciertos += acierto ? 1 : 0;
+    });
+
+    return Object.values(porUsuario).sort((a,b) =>
+        b.aciertos - a.aciertos ||
+        a.id - b.id
+    );
+}
+
+function crearHTMLResumenComparacionClasificados(){
+    const resumen = getResumenComparacionClasificados();
+
+    if(resumen.length === 0){
+        return `<p class="subtexto">Todavía no hay LugaresPro comparables.</p>`;
+    }
+
+    return `
+        <div class="clasificado-comunidad-card clasificados-reales-card">
+            <h3>Comparación vs LugaresPro</h3>
+            <p class="subtexto">Solo posiciones 1 y 2 de cada grupo. Terceros fuera por ahora.</p>
+            ${resumen.map(r => {
+                const usuario = usuarios.find(u => Number(u.id) === Number(r.id));
+                return `
+                    <div class="clasificado-comunidad-row">
+                        <span>${usuario?.nombre || "Usuario " + r.id}</span>
+                        <strong>${r.aciertos}/${r.total}</strong>
+                    </div>
+                `;
+            }).join("")}
+        </div>
+    `;
+}
+
 function crearHTMLClasificadosComunidad(grupoActivo = grupoClasificadosActual){
     const lugaresGrupo = getLugaresProGrupos();
     const totalUsuarios = new Set(lugaresGrupo.map(x => x.idUsuario)).size;
@@ -190,8 +286,8 @@ function crearHTMLClasificadosComunidad(grupoActivo = grupoClasificadosActual){
     const grupoSeguro = /^[A-L]$/.test(grupoActivo) ? grupoActivo : "A";
     grupoClasificadosActual = grupoSeguro;
 
-    const picksPrimero = lugaresGrupo.filter(x => x.lug === `${grupoSeguro}1`);
-    const picksSegundo = lugaresGrupo.filter(x => x.lug === `${grupoSeguro}2`);
+    const picksPrimero = lugaresGrupo.filter(x => x.claveNormal === `1${grupoSeguro}`);
+    const picksSegundo = lugaresGrupo.filter(x => x.claveNormal === `2${grupoSeguro}`);
     const topPrimero = contarValores(picksPrimero, x => x.lugares);
     const topSegundo = contarValores(picksSegundo, x => x.lugares);
 
@@ -220,6 +316,8 @@ function crearHTMLClasificadosComunidad(grupoActivo = grupoClasificadosActual){
         ${crearHTMLBotonesGruposClasificados(grupoSeguro)}
 
         <div class="clasificados-comunidad-grid clasificados-comunidad-grid-unico">
+            ${crearHTMLClasificadosRealesGrupo(grupoSeguro)}
+
             <div class="clasificado-comunidad-card">
                 <h3>Grupo ${grupoSeguro}</h3>
 
@@ -237,7 +335,240 @@ function crearHTMLClasificadosComunidad(grupoActivo = grupoClasificadosActual){
     `;
 }
 
+
+function crearHTMLRecordCardStats(icono, titulo, valor, detalle = "", tipoDetalle = ""){
+    const accion = tipoDetalle ? ` onclick="mostrarDetalleRecordStats('${tipoDetalle}')"` : "";
+    const claseExtra = tipoDetalle ? " record-card-clickable" : "";
+
+    return `
+        <div class="record-card${claseExtra}"${accion}>
+            <div class="record-icono">${icono}</div>
+
+            <div class="record-info">
+                <span>${titulo}</span>
+                <strong>${valor}</strong>
+                ${detalle ? `<small>${detalle}</small>` : ""}
+            </div>
+        </div>
+    `;
+}
+
+function crearHTMLRecordsStats(){
+
+    const ranking = getRanking();
+
+    const liderGeneral = [...ranking].sort((a,b) => b.puntos - a.puntos || a.nombre.localeCompare(b.nombre, "es"))[0];
+    const mejorExactos = [...ranking].sort((a,b) => b.exactos - a.exactos || b.puntos - a.puntos || a.nombre.localeCompare(b.nombre, "es"))[0];
+    const mejorGanadores = [...ranking].sort((a,b) => b.ganadores - a.ganadores || b.puntos - a.puntos || a.nombre.localeCompare(b.nombre, "es"))[0];
+    const mejorDiferencias = [...ranking].sort((a,b) => b.diferencias - a.diferencias || b.puntos - a.puntos || a.nombre.localeCompare(b.nombre, "es"))[0];
+    const partidoMayorEfectividad = getPartidoMayorEfectividad();
+
+    return `
+        <h1>RÉCORDS <span class="titulo-acento">ACTUALES</span></h1>
+        <p class="subtexto">Datos destacados y marcas vivas de la quiniela.</p>
+
+        ${crearHTMLBotonesEspeciales("records")}
+
+        ${crearHTMLDatosDestacados()}
+
+        <h2 id="marcasDestacadasStats">MARCAS <span class="titulo-acento">DESTACADAS</span></h2>
+        <p class="subtexto">Toca una tarjeta para ver el detalle completo.</p>
+
+        <div class="records-grid">
+            ${crearHTMLRecordCardStats(
+                "👑",
+                "Líder general",
+                liderGeneral ? `${liderGeneral.nombre} · ${liderGeneral.puntos} pts` : "-",
+                "Mayor puntaje acumulado"
+            )}
+
+            ${crearHTMLRecordCardStats(
+                "🎯",
+                "Más marcadores exactos",
+                mejorExactos ? `${mejorExactos.nombre} · ${mejorExactos.exactos}` : "-",
+                "Toca para ver la tabla completa",
+                "exactos"
+            )}
+
+            ${crearHTMLRecordCardStats(
+                "✅",
+                "Más ganadores",
+                mejorGanadores ? `${mejorGanadores.nombre} · ${mejorGanadores.ganadores}` : "-",
+                "Toca para ver la tabla completa",
+                "ganadores"
+            )}
+
+            ${crearHTMLRecordCardStats(
+                "📐",
+                "Más diferencia + ganador",
+                mejorDiferencias ? `${mejorDiferencias.nombre} · ${mejorDiferencias.diferencias}` : "-",
+                "Toca para ver la tabla completa",
+                "diferencias"
+            )}
+
+            ${crearHTMLRecordCardStats(
+                "🔥",
+                "Partido con mayor efectividad",
+                partidoMayorEfectividad
+                    ? `${partidoMayorEfectividad.partido.local} vs ${partidoMayorEfectividad.partido.visita} · ${partidoMayorEfectividad.porcentaje}%`
+                    : "-",
+                partidoMayorEfectividad
+                    ? `${partidoMayorEfectividad.puntosGanados}/${partidoMayorEfectividad.puntosDisponibles} pts posibles · toca para detalle`
+                    : "Solo partidos finalizados",
+                "efectividad"
+            )}
+        </div>
+    `;
+}
+
+function volverARecordsStats(){
+    mostrarEstadisticas("records", "conteo", grupoClasificadosActual, false);
+
+    setTimeout(() => {
+        const titulo = document.getElementById("marcasDestacadasStats");
+
+        if(titulo){
+            const y = titulo.getBoundingClientRect().top + window.scrollY - 85;
+            window.scrollTo({
+                top: Math.max(0, y),
+                behavior: "smooth"
+            });
+        }
+    }, 60);
+}
+
+function crearHTMLDetalleRecordUsuariosStats(tipo){
+    const config = {
+        exactos: { titulo: "Más marcadores exactos", campo: "exactos", icono: "🎯", ayuda: "Marcadores que valen 3 puntos." },
+        ganadores: { titulo: "Más ganadores", campo: "ganadores", icono: "✅", ayuda: "Aciertos de ganador." },
+        diferencias: { titulo: "Más diferencia + ganador", campo: "diferencias", icono: "📐", ayuda: "Aciertos que valen 2 puntos." }
+    }[tipo];
+
+    const lista = getRankingRecord(tipo);
+
+    return `
+        <button onclick="volverARecordsStats()" class="btnVolver">⬅ Volver</button>
+        <h1>${config.icono} ${config.titulo}</h1>
+        <p class="subtexto">${config.ayuda}</p>
+
+        <div class="tabla-ranking">
+            ${lista.map((u, index) => `
+                <div class="ranking-card ranking-card-detallado" onclick="verDetalleUsuario(${u.id})">
+                    <div class="ranking-pos">${index + 1}</div>
+                    <div class="ranking-user">
+                        ${u.nombre}
+                        <span>${u.puntos} pts totales · ${u.jugados} partidos</span>
+                    </div>
+                    <div class="ranking-puntos">${u[config.campo]}</div>
+                </div>
+            `).join("")}
+        </div>
+    `;
+}
+
+function crearHTMLPaginacionRecordEfectividadStats(paginaSegura, totalPaginas){
+    return `
+        <div class="paginacion paginacion-detalle">
+            <button 
+                onclick="mostrarDetalleRecordStats('efectividad', ${paginaSegura - 1}, true)" 
+                ${paginaSegura <= 1 ? "disabled" : ""}
+            >
+                ⬅ Anterior
+            </button>
+
+            <span>Página ${paginaSegura} de ${totalPaginas}</span>
+
+            <button 
+                onclick="mostrarDetalleRecordStats('efectividad', ${paginaSegura + 1}, true)" 
+                ${paginaSegura >= totalPaginas ? "disabled" : ""}
+            >
+                Siguiente ➡
+            </button>
+        </div>
+    `;
+}
+
+function crearHTMLDetalleRecordEfectividadStats(pagina = 1){
+    const lista = getEfectividadPartidosOrdenada();
+    const itemsPorPagina = 10;
+    const totalPaginas = Math.max(1, Math.ceil(lista.length / itemsPorPagina));
+    const paginaSegura = Math.min(Math.max(Number(pagina) || 1, 1), totalPaginas);
+    const inicio = (paginaSegura - 1) * itemsPorPagina;
+    const fin = Math.min(inicio + itemsPorPagina, lista.length);
+    const listaPagina = lista.slice(inicio, fin);
+    const paginacionHTML = lista.length > 0
+        ? crearHTMLPaginacionRecordEfectividadStats(paginaSegura, totalPaginas)
+        : "";
+
+    return `
+        <button onclick="volverARecordsStats()" class="btnVolver">⬅ Volver</button>
+        <h1 id="tituloRecordEfectividadStats">🔥 MAYOR <span class="titulo-acento">EFECTIVIDAD</span></h1>
+        <p class="subtexto">Partidos ordenados por puntos ganados / puntos disponibles.</p>
+
+        ${paginacionHTML}
+
+        <div class="tabla-ranking">
+            ${lista.length === 0 ? `<p class="subtexto">Aún no hay partidos finalizados con picks.</p>` : listaPagina.map((item, index) => `
+                <div class="ranking-card ranking-card-detallado" onclick="verPartido(${item.partido.id})">
+                    <div class="ranking-pos">${inicio + index + 1}</div>
+                    <div class="ranking-user">
+                        ${item.partido.local} vs ${item.partido.visita}
+                        <span>${item.puntosGanados}/${item.puntosDisponibles} pts posibles</span>
+                    </div>
+                    <div class="ranking-puntos">${item.porcentaje}%</div>
+                </div>
+            `).join("")}
+        </div>
+
+        ${paginacionHTML}
+    `;
+}
+
+function mostrarDetalleRecordStats(tipo, pagina = 1, scrollTitulo = false){
+    if(!scrollTitulo){
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    if(tipo === "efectividad"){
+        contenido.innerHTML = `
+            ${crearHTMLDetalleRecordEfectividadStats(pagina)}
+            ${getFooterCopyright()}
+        `;
+
+        if(scrollTitulo){
+            setTimeout(() => {
+                const titulo = document.getElementById("tituloRecordEfectividadStats");
+
+                if(titulo){
+                    const y = titulo.getBoundingClientRect().top + window.scrollY - 85;
+                    window.scrollTo({
+                        top: Math.max(0, y),
+                        behavior: "smooth"
+                    });
+                }
+            }, 50);
+        }
+
+        return;
+    }
+
+    if(["exactos", "ganadores", "diferencias"].includes(tipo)){
+        contenido.innerHTML = `
+            ${crearHTMLDetalleRecordUsuariosStats(tipo)}
+            ${getFooterCopyright()}
+        `;
+        return;
+    }
+
+    mostrarEstadisticas("records");
+}
+
+
 function crearHTMLEspecial(categoria){
+
+    if(categoria === "records"){
+        return crearHTMLRecordsStats();
+    }
 
     if(categoria === "clasificados"){
         return crearHTMLClasificadosComunidad(grupoClasificadosActual);
@@ -270,7 +601,9 @@ function crearHTMLEspecial(categoria){
         `;
     }).join("");
 
-    const panelActual = vistaEspecialActual === "usuarios" ? "usuarios" : "conteo";
+    const panelActual = categoria === "goleador" && vistaEspecialActual === "standing"
+        ? "standing"
+        : (vistaEspecialActual === "usuarios" ? "usuarios" : "conteo");
 
     return `
         <h1>PICKS <span class="titulo-acento">ESPECIALES</span></h1>
@@ -297,7 +630,7 @@ function crearHTMLEspecial(categoria){
         ${crearHTMLBotonesVistaEspecial(categoria, panelActual)}
 
         <div class="especiales-layout especiales-layout-unico">
-            ${panelActual === "conteo" ? `
+            ${panelActual === "standing" ? crearHTMLStandingGoleador() : (panelActual === "conteo" ? `
                 <div class="especial-panel">
                     <h3>Conteo general</h3>
                     ${conteoHTML}
@@ -307,7 +640,7 @@ function crearHTMLEspecial(categoria){
                     <h3>Picks por usuario</h3>
                     ${listaUsuarios}
                 </div>
-            `}
+            `)}
         </div>
     `;
 }
@@ -327,7 +660,7 @@ function mostrarEstadisticas(categoriaEspecial = categoriaEspecialActual, vistaE
         ? categoriaEspecial
         : "campeon";
 
-    vistaEspecialActual = vistaEspecial === "usuarios" ? "usuarios" : "conteo";
+    vistaEspecialActual = ["usuarios", "standing"].includes(vistaEspecial) ? vistaEspecial : "conteo";
 
     if(/^[A-L]$/.test(grupoClasificados)){
         grupoClasificadosActual = grupoClasificados;

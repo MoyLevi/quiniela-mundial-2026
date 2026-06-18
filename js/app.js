@@ -15,13 +15,20 @@ async function actualizarDatos(){
 
         if(boton){
             boton.disabled = true;
-            boton.innerHTML = `<span id="balonRefresh" class="balon-actualizando">⚽</span> Actualizando...`;
+            boton.innerHTML = `<img id="balonRefresh" class="balon-app balon-actualizando" src="img/trionda.png" alt="Balón"> Actualizando...`;
         }
 
         await cargarPartidos();
         await cargarUsuarios();
         await cargarPicks();
         await cargarLugaresPro();
+        await cargarKnockout();
+        await cargarRankKO();
+        await cargarPicksKO();
+
+        if(typeof precalcularRankings === "function"){
+            precalcularRankings();
+        }
 
         actualizarTimestamp();
         mostrarInicio();
@@ -36,7 +43,7 @@ async function iniciarApp(){
     
     contenido.innerHTML = `
         <div class="loading">
-            <h1><span class="balon-actualizando">⚽</span> Cargando quiniela...</h1>
+            <h1><img class="balon-app balon-actualizando" src="img/trionda.png" alt="Balón"> Cargando quiniela...</h1>
             <p>Consultando datos de Google Sheets</p>
         </div>
     `;
@@ -46,6 +53,13 @@ async function iniciarApp(){
         await cargarUsuarios();
         await cargarPicks();
         await cargarLugaresPro();
+        await cargarKnockout();
+        await cargarRankKO();
+        await cargarPicksKO();
+
+        if(typeof precalcularRankings === "function"){
+            precalcularRankings();
+        }
 
         actualizarTimestamp();
         mostrarInicio();
