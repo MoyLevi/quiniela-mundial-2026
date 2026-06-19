@@ -2502,3 +2502,76 @@
         height:38px;
     }
 }
+
+/* v3.1.2 ajustes: Leéme historial, Bracket export y Goleadores ESPN */
+.leeme-historial-barra{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    margin:12px auto 14px;
+    max-width:560px;
+    padding:9px;
+    border-radius:16px;
+    background:rgba(15,23,42,.72);
+    border:1px solid rgba(255,255,255,.10);
+}
+.leeme-historial-barra button{
+    background:#334155;
+    color:#fff;
+    border:none;
+    border-radius:11px;
+    padding:8px 12px;
+    font-weight:800;
+    cursor:pointer;
+}
+.leeme-historial-barra button:disabled{
+    opacity:.38;
+    cursor:not-allowed;
+}
+.leeme-historial-barra span{
+    color:#f8fafc;
+    font-weight:900;
+    min-width:52px;
+    text-align:center;
+}
+.bracket-export-actions{
+    display:flex;
+    justify-content:center;
+    margin:10px 0 12px;
+}
+.bracket-export-actions button{
+    border:none;
+    border-radius:14px;
+    padding:10px 16px;
+    background:#16a34a;
+    color:#fff;
+    font-weight:900;
+    cursor:pointer;
+    box-shadow:0 8px 18px rgba(22,163,74,.22);
+}
+.goleadores-panel .goleador-row span{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    flex-wrap:wrap;
+}
+.goleadores-panel .goleador-row .flag-mini{
+    width:25px;
+    height:17px;
+    border-radius:4px;
+}
+@media(max-width:520px){
+    .leeme-historial-barra{
+        gap:7px;
+        padding:8px 6px;
+    }
+    .leeme-historial-barra button{
+        padding:7px 8px;
+        font-size:12px;
+    }
+    .bracket-export-actions button{
+        width:100%;
+        max-width:260px;
+    }
+}
