@@ -109,7 +109,7 @@ function getClaseStatus(status){
 }
 
 function getFooterCopyright(){
-    return `<div class="dev-footer">© Moy · 2026 (v.3.0.7)</div>`;
+    return `<div class="dev-footer">© Moy · 2026 (v.3.1.0)</div>`;
 }
 
 function getPrediccionColectiva(partidoId){
@@ -178,28 +178,91 @@ function getEquipoTerceroProvisionalPorClave(claveTercero){
     return tabla[2]?.nombre || "(Por Definir)";
 }
 
+function getClavesTercerosR32Ordenadas(){
+    const ordenBracket = [73,75,90,97,74,77,89,83,84,93,98,81,82,94,76,78,91,99,79,80,92,86,88,95,100,85,87,96];
+    const mapaPartidos = new Map(knockout.map(p => [Number(p.id), p]));
+    const salida = [];
+    const vistas = [
+        ...ordenBracket.map(id => mapaPartidos.get(id)).filter(Boolean),
+        ...knockout.filter(p => Number(p.idStage) === 2 && !ordenBracket.includes(Number(p.id)))
+    ];
+
+    vistas.forEach(partido => {
+        [partido.loc, partido.vis].forEach(clave => {
+            const texto = (clave || "").toString().trim().toUpperCase();
+            if(/^3-[A-L]+$/.test(texto) && !salida.includes(texto)){
+                salida.push(texto);
+            }
+        });
+    });
+
+    return salida;
+}
+
+function resolverAsignacionTercerosR32Provisional(){
+    const terceros = getTercerosClasificadosReales().map(t => `3${(t.grupo || "").toUpperCase()}`);
+    const tercerosSet = new Set(terceros);
+    const claves = getClavesTercerosR32Ordenadas();
+
+    const candidatosPorClave = new Map(
+        claves.map(clave => {
+            const prioridades = clave.replace(/^3-/, "").split("").map(g => `3${g}`);
+            return [clave, prioridades.filter(op => tercerosSet.has(op))];
+        })
+    );
+
+    const ordenBusqueda = [...claves].sort((a,b) => {
+        const ca = candidatosPorClave.get(a)?.length || 99;
+        const cb = candidatosPorClave.get(b)?.length || 99;
+        return ca - cb || claves.indexOf(a) - claves.indexOf(b);
+    });
+
+    function backtrack(idx, usados, asignado){
+        if(idx >= ordenBusqueda.length){
+            return asignado;
+        }
+
+        const clave = ordenBusqueda[idx];
+        const candidatos = candidatosPorClave.get(clave) || [];
+
+        for(const candidato of candidatos){
+            if(usados.has(candidato)) continue;
+            const nuevoUsados = new Set(usados);
+            nuevoUsados.add(candidato);
+            const nuevoAsignado = {...asignado, [clave]: candidato};
+            const resultado = backtrack(idx + 1, nuevoUsados, nuevoAsignado);
+            if(resultado) return resultado;
+        }
+
+        return null;
+    }
+
+    let asignacion = backtrack(0, new Set(), {});
+
+    // Respaldo: si algún escenario provisional no permite asignación perfecta,
+    // asigna lo posible sin repetir, respetando prioridad. Así nunca marca usados antes de tiempo.
+    if(!asignacion){
+        asignacion = {};
+        const usados = new Set();
+        claves.forEach(clave => {
+            const elegido = (candidatosPorClave.get(clave) || []).find(op => !usados.has(op));
+            if(elegido){
+                usados.add(elegido);
+                asignacion[clave] = elegido;
+            }
+        });
+    }
+
+    return asignacion;
+}
+
 function getMapaTercerosR32Provisional(){
-    const clasificados = getTercerosClasificadosSetProvisional();
-    const usados = new Set();
+    const asignacion = resolverAsignacionTercerosR32Provisional();
     const mapa = {};
 
-    knockout
-        .filter(p => Number(p.idStage) === 2)
-        .forEach(partido => {
-            [partido.loc, partido.vis].forEach(clave => {
-                const texto = (clave || "").toString().trim().toUpperCase();
-                const m = texto.match(/^3-([A-L]+)$/);
-                if(!m || mapa[texto]) return;
-
-                const opciones = m[1].split("").map(g => `3${g}`);
-                const elegida = opciones.find(op => clasificados.has(op) && !usados.has(op));
-
-                if(elegida){
-                    usados.add(elegida);
-                    mapa[texto] = getEquipoTerceroProvisionalPorClave(elegida);
-                }
-            });
-        });
+    Object.entries(asignacion).forEach(([clave, tercero]) => {
+        mapa[clave] = getEquipoTerceroProvisionalPorClave(tercero);
+    });
 
     return mapa;
 }

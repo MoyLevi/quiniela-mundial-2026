@@ -3,18 +3,17 @@ function mostrarInicio(){
     const ranking = typeof getRankingGeneralCompleto === "function" ? getRankingGeneralCompleto() : getRanking();
     const lider = ranking[0];
     const totalPicksCapturados = (Array.isArray(picks) ? picks.length : 0) + (Array.isArray(picksKO) ? picksKO.length : 0);
+    const golesMarcados = (Array.isArray(partidos) ? partidos : []).reduce((total, p) => {
+        const gl = p.golesLoc !== "" && p.golesLoc !== undefined ? Number(p.golesLoc) : NaN;
+        const gv = p.golesVis !== "" && p.golesVis !== undefined ? Number(p.golesVis) : NaN;
+        return total + (Number.isFinite(gl) ? gl : 0) + (Number.isFinite(gv) ? gv : 0);
+    }, 0);
 
     const proximos = partidos
         .filter(p => p.status === "Pendiente" || p.status === "En vivo")
         .slice(0, 3);
 
     contenido.innerHTML = `
-        <div class="acciones-app acciones-leeme-top">
-            <button class="btn-leeme" onclick="mostrarLeeme()">
-                🔴 Léeme
-            </button>
-        </div>
-
         <div class="hero-logo">
             <img 
                 src="https://assets.football-logos.cc/logos/tournaments/700x700/fifa-world-cup-2026--white.9ba8a004.png" 
@@ -24,41 +23,38 @@ function mostrarInicio(){
 
         <h1>QUINIELA <span class="titulo-acento">MUNDIAL 2026</span></h1>
 
-        <div class="acciones-app">
-            <button onclick="compartirApp()">📤 Compartir quiniela</button>
+        <div class="acciones-inicio-compactas">
+            <button class="btn-leeme" onclick="mostrarLeeme()">Leéme</button>
+            <button class="btn-premios" onclick="mostrarReglasPremios()">Premios</button>
+            <button onclick="compartirApp()">Compartir</button>
+            <button class="btn-refresh btn-refresh-compacto" onclick="actualizarDatos()">Actualiza</button>
         </div>
 
-        <div class="refresh-container">
+        <div class="refresh-container refresh-container-simple">
             <p class="ultima-actualizacion">
                 Última actualización: ${formatearFechaHora(ultimaActualizacion)}
             </p>
-
-            <button class="btn-refresh" onclick="actualizarDatos()">
-                <img id="balonRefresh" class="balon-app" src="img/trionda.png" alt="Balón">
-                Actualizar datos
-            </button>
         </div>
 
-        <div class="acciones-app acciones-inicio-botones">
-            <button class="btn-premios" onclick="mostrarReglasPremios()">
-                🏆 Premios
-            </button>
-        </div>
-
-        <div class="inicio-grid">
-            <div class="inicio-card">
+        <div class="inicio-grid inicio-grid-compacta">
+            <div class="inicio-card inicio-card-compacta">
                 <h2>${usuarios.length}</h2>
                 <p>Total de jugadores</p>
             </div>
 
-            <div class="inicio-card">
+            <div class="inicio-card inicio-card-compacta">
                 <h2>${lider ? lider.puntos : 0}</h2>
                 <p>Puntos del líder</p>
             </div>
 
-            <div class="inicio-card">
+            <div class="inicio-card inicio-card-compacta">
                 <h2>${totalPicksCapturados}</h2>
                 <p>Picks capturados</p>
+            </div>
+
+            <div class="inicio-card inicio-card-compacta">
+                <h2>${golesMarcados}</h2>
+                <p>Goles marcados</p>
             </div>
         </div>
 

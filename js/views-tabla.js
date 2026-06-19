@@ -1018,7 +1018,7 @@ function mostrarTabla(tipo = "principal", grupo = "A", hacerScroll = true){
 
         contenido.innerHTML = `
             <h1>STANDINGS <span class="titulo-acento">FASE DE GRUPOS</span></h1>
-            <p class="subtexto">Puntos únicamente de partidos de fase de grupos.</p>
+            <p class="subtexto">Ranking durante la Fase de Grupos</p>
 
             ${crearHTMLTabsTabla(tipo)}
 
@@ -1036,7 +1036,7 @@ function mostrarTabla(tipo = "principal", grupo = "A", hacerScroll = true){
 
         contenido.innerHTML = `
             <h1>STANDINGS <span class="titulo-acento">ESPECIALES</span></h1>
-            <p class="subtexto">Tabla preparada para los puntos especiales finales.</p>
+            <p class="subtexto">Ranking de puntos especiales finales</p>
 
             ${crearHTMLTabsTabla(tipo)}
 
@@ -1054,7 +1054,7 @@ function mostrarTabla(tipo = "principal", grupo = "A", hacerScroll = true){
 
         contenido.innerHTML = `
             <h1>STANDINGS <span class="titulo-acento">EXACTOS</span></h1>
-            <p class="subtexto">Ranking por marcadores exactos de fase de grupos.</p>
+            <p class="subtexto">Ranking de marcadores exactos</p>
 
             ${crearHTMLTabsTabla(tipo)}
 

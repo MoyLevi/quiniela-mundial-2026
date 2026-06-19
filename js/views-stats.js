@@ -16,7 +16,7 @@ const categoriasEspeciales = {
     },
     goleador: {
         titulo: "Goleador",
-        icono: "⚽",
+        icono: '<img class="icono-trionda-mini" src="img/trionda.png" alt="Balón">',
         campo: "goleador"
     },
     sorpresa: {
@@ -764,12 +764,47 @@ function crearCentroBracketHTML(){
 }
 
 
+
+function equipoSigueVivoBracket(nombre, grupo = ""){
+    const equipo = (nombre || "").toString().trim();
+    if(!equipo || esPorDefinir(equipo)) return false;
+    const normal = normalizarNombreEquipo(equipo);
+
+    if(!faseGruposCerradaPorJuego70()){
+        return equipoClasificadoReal(equipo, grupo);
+    }
+
+    const partidosKO = getKnockoutResueltoGlobal();
+    const participantes = new Set();
+    const eliminados = new Set();
+
+    partidosKO.forEach(p => {
+        const loc = normalizarNombreEquipo(p.local);
+        const vis = normalizarNombreEquipo(p.visita);
+        if(loc && !esPorDefinir(p.local)) participantes.add(loc);
+        if(vis && !esPorDefinir(p.visita)) participantes.add(vis);
+
+        if(partidoFinalizado(p)){
+            const pasa = normalizarNombreEquipo(p.pasa);
+            if(loc && loc !== pasa) eliminados.add(loc);
+            if(vis && vis !== pasa) eliminados.add(vis);
+        }
+    });
+
+    return participantes.has(normal) && !eliminados.has(normal);
+}
+
+function crearEstadoVidaBracketHTML(equipo, grupo){
+    const inTorneo = equipoSigueVivoBracket(equipo, grupo);
+    return `<span class="bracket-life ${inTorneo ? "bracket-life-in" : "bracket-life-out"}">${inTorneo ? "IN" : "OUT"}</span>`;
+}
+
 function crearHTMLGruposBracket(){
     const grupos = "ABCDEFGHIJKL".split("");
 
     return `
         <div class="bracket-groups-strip">
-            <h2>GROUPS</h2>
+            <h2>Grupos</h2>
             <div class="bracket-groups-grid">
                 ${grupos.map(grupo => {
                     const equipos = getEquiposPorGrupo(grupo);
@@ -777,7 +812,10 @@ function crearHTMLGruposBracket(){
                         <div class="bracket-group-col">
                             <strong>${grupo}</strong>
                             ${equipos.map(equipo => `
-                                <img src="${getFlag(equipo)}" alt="${equipo}" title="${equipo}" loading="lazy">
+                                <div class="bracket-group-team" title="${equipo}">
+                                    <img src="${getFlag(equipo)}" alt="${equipo}" loading="lazy">
+                                    ${crearEstadoVidaBracketHTML(equipo, grupo)}
+                                </div>
                             `).join("")}
                         </div>
                     `;
@@ -848,7 +886,7 @@ function crearHTMLPodioEspecial(){
 
         <div class="podio-wrapper">
             <h2>🏆 Podio</h2>
-            <p class="subtexto">Consulta agrupada de Primero, Segundo, Tercero y Goleador.</p>
+            <p class="subtexto">Filtro por Categorías</p>
             ${crearHTMLBotonesPodio(categoria)}
         </div>
 
