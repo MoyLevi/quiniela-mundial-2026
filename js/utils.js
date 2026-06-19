@@ -109,7 +109,7 @@ function getClaseStatus(status){
 }
 
 function getFooterCopyright(){
-    return `<div class="dev-footer">© Moy · 2026 (v.3.0.1)</div>`;
+    return `<div class="dev-footer">© Moy · 2026 (v.3.0.7)</div>`;
 }
 
 function getPrediccionColectiva(partidoId){
@@ -134,6 +134,89 @@ function getPrediccionColectiva(partidoId){
 
 function esPorDefinir(nombre){
     return !nombre || nombre.trim() === "" || nombre.toLowerCase().includes("por definir");
+}
+
+
+
+/* =========================================================
+   BRACKET R32 PROVISIONAL · hasta cierre juego 70
+   ---------------------------------------------------------
+   Antes de que el partido 70 tenga Status Finalizado, se
+   previsualiza R32 con la tabla provisional de grupos:
+   1°/2° por grupo + 8 mejores terceros. Después del cierre,
+   se respeta únicamente Knockout/Rank oficial.
+   ========================================================= */
+
+function faseGruposCerradaPorJuego70(){
+    const p70 = partidos.find(p => Number(p.id) === 70);
+    const status = (p70?.status || "").toString().trim().toLowerCase();
+    return status.includes("finalizado") || status.includes("finalizada") || status.includes("final");
+}
+
+function getClaveDirectaProvisional(clave){
+    const texto = (clave || "").toString().trim().toUpperCase();
+    const m = texto.match(/^([12])([A-L])$/);
+    if(!m) return "";
+
+    const lugar = Number(m[1]);
+    const grupo = m[2];
+    const tabla = completarTablaGrupoProvisional(grupo);
+    return tabla[lugar - 1]?.nombre || "(Por Definir)";
+}
+
+function getTercerosClasificadosSetProvisional(){
+    return new Set(getTercerosClasificadosReales().map(t => `3${(t.grupo || "").toUpperCase()}`));
+}
+
+function getEquipoTerceroProvisionalPorClave(claveTercero){
+    const texto = (claveTercero || "").toString().trim().toUpperCase();
+    const m = texto.match(/^3([A-L])$/);
+    if(!m) return "";
+
+    const grupo = m[1];
+    const tabla = completarTablaGrupoProvisional(grupo);
+    return tabla[2]?.nombre || "(Por Definir)";
+}
+
+function getMapaTercerosR32Provisional(){
+    const clasificados = getTercerosClasificadosSetProvisional();
+    const usados = new Set();
+    const mapa = {};
+
+    knockout
+        .filter(p => Number(p.idStage) === 2)
+        .forEach(partido => {
+            [partido.loc, partido.vis].forEach(clave => {
+                const texto = (clave || "").toString().trim().toUpperCase();
+                const m = texto.match(/^3-([A-L]+)$/);
+                if(!m || mapa[texto]) return;
+
+                const opciones = m[1].split("").map(g => `3${g}`);
+                const elegida = opciones.find(op => clasificados.has(op) && !usados.has(op));
+
+                if(elegida){
+                    usados.add(elegida);
+                    mapa[texto] = getEquipoTerceroProvisionalPorClave(elegida);
+                }
+            });
+        });
+
+    return mapa;
+}
+
+function resolverClaveProvisionalR32(clave){
+    const texto = (clave || "").toString().trim().toUpperCase();
+    if(!texto) return "(Por Definir)";
+
+    const directo = getClaveDirectaProvisional(texto);
+    if(directo && !esPorDefinir(directo)) return directo;
+
+    if(/^3-[A-L]+$/.test(texto)){
+        const mapaTerceros = getMapaTercerosR32Provisional();
+        return mapaTerceros[texto] || "(Por Definir)";
+    }
+
+    return "";
 }
 
 function getRankEquipoPorClave(clave){
@@ -175,10 +258,12 @@ function getPartidoGlobalKO(partidoId){
     const base = getPartidoKOBase(partidoId);
     if(!base) return null;
 
+    const usarProvisionalR32 = !faseGruposCerradaPorJuego70() && Number(base.idStage) === 2;
+
     const partido = {
         ...base,
-        local: esPorDefinir(base.local) ? resolverClaveGlobal(base.loc) : base.local,
-        visita: esPorDefinir(base.visita) ? resolverClaveGlobal(base.vis) : base.visita,
+        local: usarProvisionalR32 ? resolverClaveGlobal(base.loc) : (esPorDefinir(base.local) ? resolverClaveGlobal(base.loc) : base.local),
+        visita: usarProvisionalR32 ? resolverClaveGlobal(base.vis) : (esPorDefinir(base.visita) ? resolverClaveGlobal(base.vis) : base.visita),
         esKO: true
     };
 
@@ -189,6 +274,13 @@ function getPartidoGlobalKO(partidoId){
 function resolverClaveGlobal(clave){
     const texto = (clave || "").trim();
     if(!texto) return "(Por Definir)";
+
+    // Mientras el partido 70 no esté Finalizado, R32 usa acomodo provisional.
+    // Al finalizar grupos, se ignora lo provisional y manda Knockout/Rank oficial.
+    if(!faseGruposCerradaPorJuego70() && !texto.startsWith("W") && !texto.startsWith("RU")){
+        const provisional = resolverClaveProvisionalR32(texto);
+        if(provisional) return provisional;
+    }
 
     if(texto.startsWith("W") || texto.startsWith("RU")){
         const esRU = texto.startsWith("RU");

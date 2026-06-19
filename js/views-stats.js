@@ -1,7 +1,7 @@
 const categoriasEspeciales = {
     campeon: {
-        titulo: "Campeón",
-        icono: "🏆",
+        titulo: "Primero",
+        icono: "🥇",
         campo: "campeon"
     },
     segundo: {
@@ -24,6 +24,11 @@ const categoriasEspeciales = {
         icono: "🌟",
         campo: "sorpresa"
     },
+    podio: {
+        titulo: "Podio",
+        icono: "🏆",
+        campo: null
+    },
     clasificados: {
         titulo: "Clasificados",
         icono: "🏆",
@@ -33,10 +38,19 @@ const categoriasEspeciales = {
         titulo: "Récords",
         icono: "🏆",
         campo: null
+    },
+    bracket: {
+        titulo: "Bracket",
+        icono: "🏟️",
+        campo: null
     }
 };
 
-let categoriaEspecialActual = "campeon";
+const categoriasStatsPrincipales = ["bracket", "clasificados", "records", "sorpresa", "podio"];
+const categoriasPodio = ["campeon", "segundo", "tercero", "goleador"];
+
+let categoriaEspecialActual = "bracket";
+let categoriaPodioActual = "campeon";
 let vistaEspecialActual = "conteo";
 let grupoClasificadosActual = "A";
 
@@ -101,32 +115,54 @@ function getResumenEspecial(categoria){
 
 function crearHTMLBotonesEspeciales(categoriaActiva){
     return `
-        <div class="tabs-especiales">
-            ${Object.entries(categoriasEspeciales).map(([key, cat]) => `
-                <button 
-                    class="${categoriaActiva === key ? "tab-activa" : ""}"
-                    onclick="mostrarEstadisticas('${key}', 'conteo', grupoClasificadosActual, true)"
-                >
-                    ${cat.icono} ${cat.titulo}
-                </button>
-            `).join("")}
+        <div class="tabs-especiales tabs-stats-principales">
+            ${categoriasStatsPrincipales.map(key => {
+                const cat = categoriasEspeciales[key];
+                return `
+                    <button 
+                        class="${categoriaActiva === key ? "tab-activa" : ""}"
+                        onclick="mostrarEstadisticas('${key}', 'conteo', grupoClasificadosActual, true)"
+                    >
+                        ${cat.icono} ${cat.titulo}
+                    </button>
+                `;
+            }).join("")}
+        </div>
+    `;
+}
+
+function crearHTMLBotonesPodio(categoriaActiva){
+    return `
+        <div class="tabs-mini-estadisticas tabs-podio">
+            ${categoriasPodio.map(key => {
+                const cat = categoriasEspeciales[key];
+                return `
+                    <button
+                        class="${categoriaActiva === key ? "tab-activa" : ""}"
+                        onclick="mostrarEstadisticas('podio', vistaEspecialActual, grupoClasificadosActual, true, '${key}')"
+                    >
+                        ${cat.icono} ${cat.titulo}
+                    </button>
+                `;
+            }).join("")}
         </div>
     `;
 }
 
 function crearHTMLBotonesVistaEspecial(categoria, vistaActiva){
+    const destino = categoriasPodio.includes(categoria) ? "podio" : categoria;
     return `
         <div class="tabs-mini-estadisticas">
             <button
                 class="${vistaActiva === "conteo" ? "tab-activa" : ""}"
-                onclick="mostrarEstadisticas('${categoria}', 'conteo', grupoClasificadosActual, true)"
+                onclick="mostrarEstadisticas('${destino}', 'conteo', grupoClasificadosActual, true, '${categoria}')"
             >
                 📊 Conteo General
             </button>
 
             <button
                 class="${vistaActiva === "usuarios" ? "tab-activa" : ""}"
-                onclick="mostrarEstadisticas('${categoria}', 'usuarios', grupoClasificadosActual, true)"
+                onclick="mostrarEstadisticas('${destino}', 'usuarios', grupoClasificadosActual, true, '${categoria}')"
             >
                 👥 Picks por Usuario
             </button>
@@ -134,7 +170,7 @@ function crearHTMLBotonesVistaEspecial(categoria, vistaActiva){
             ${categoria === "goleador" ? `
                 <button
                     class="${vistaActiva === "standing" ? "tab-activa" : ""}"
-                    onclick="mostrarEstadisticas('${categoria}', 'standing', grupoClasificadosActual, true)"
+                    onclick="mostrarEstadisticas('${destino}', 'standing', grupoClasificadosActual, true, '${categoria}')"
                 >
                     🏅 Standing
                 </button>
@@ -564,10 +600,305 @@ function mostrarDetalleRecordStats(tipo, pagina = 1, scrollTitulo = false){
 }
 
 
+/* =========================================================
+   BRACKET VISUAL DINÁMICO · v3.0.2
+   Usa Knockout + RankKO y se actualiza con los resultados.
+   ========================================================= */
+
+const bracketVisualConfig = [
+    {
+        lado:"izq",
+        grupos:[
+            { ronda32:[73,75], octavos:90, cuartos:97, semi:101 },
+            { ronda32:[74,77], octavos:89, cuartos:97, semi:101 },
+            { ronda32:[83,84], octavos:93, cuartos:98, semi:101 },
+            { ronda32:[81,82], octavos:94, cuartos:98, semi:101 }
+        ]
+    },
+    {
+        lado:"der",
+        grupos:[
+            { ronda32:[76,78], octavos:91, cuartos:99, semi:102 },
+            { ronda32:[79,80], octavos:92, cuartos:99, semi:102 },
+            { ronda32:[86,88], octavos:95, cuartos:100, semi:102 },
+            { ronda32:[85,87], octavos:96, cuartos:100, semi:102 }
+        ]
+    }
+];
+
+function getNombreEquipoBracket(nombre){
+    const texto = (nombre || "").toString().trim();
+    if(!texto || esPorDefinir(texto)) return "Por definir";
+    return texto;
+}
+
+function getClaseEquipoBracket(partido, equipo){
+    if(!partido || !equipo || esPorDefinir(equipo)) return "";
+    const pasa = getNombreEquipoBracket(partido.pasa);
+    return normalizarNombreEquipo(pasa) === normalizarNombreEquipo(equipo)
+        ? " bracket-team-winner"
+        : "";
+}
+
+function crearEquipoBracketHTML(partido, equipo, lado){
+    const nombre = getNombreEquipoBracket(equipo);
+    const sinDefinir = nombre === "Por definir";
+    const claseWinner = getClaseEquipoBracket(partido, nombre);
+    const inicial = sinDefinir ? "PD" : nombre.slice(0, 3).toUpperCase();
+
+    return `
+        <div class="bracket-team${claseWinner}${sinDefinir ? " bracket-team-pd" : ""}">
+            ${sinDefinir ? `
+                <div class="bracket-flag-placeholder">${inicial}</div>
+            ` : `
+                <img src="${getFlag(nombre)}" alt="${nombre}" loading="lazy">
+            `}
+            <span>${nombre}</span>
+        </div>
+    `;
+}
+
+function crearScoreBracketHTML(partido){
+    if(!partido || partido.golesLoc === "" || partido.golesVis === ""){
+        return `<div class="bracket-score">VS</div>`;
+    }
+
+    return `
+        <div class="bracket-score">
+            ${formatearMarcadorConPenales(partido.golesLoc, partido.golesVis, partido.penLoc, partido.penVis)}
+        </div>
+    `;
+}
+
+function crearPartidoBracketHTML(id, extraClass = ""){
+    const partido = getPartidoGlobalKO(Number(id));
+
+    if(!partido){
+        return `<div class="bracket-match bracket-empty ${extraClass}">Partido ${id}</div>`;
+    }
+
+    const gana = getNombreEquipoBracket(partido.pasa);
+    const finalizado = partidoFinalizado(partido);
+
+    return `
+        <div class="bracket-match ${finalizado ? "bracket-finalizado" : ""} ${extraClass}" title="${partido.stage} · ${partido.lugar}">
+            <div class="bracket-meta">
+                <span>${partido.id}</span>
+                <strong>${partido.fecha || ""}</strong>
+                <em>${partido.lugar || ""}</em>
+            </div>
+            <div class="bracket-teams">
+                ${crearEquipoBracketHTML(partido, partido.local, "loc")}
+                ${crearScoreBracketHTML(partido)}
+                ${crearEquipoBracketHTML(partido, partido.visita, "vis")}
+            </div>
+            <div class="bracket-winner">${finalizado && gana !== "Por definir" ? `Gana: ${gana}` : "Pendiente"}</div>
+        </div>
+    `;
+}
+
+function crearColumnaBracketHTML(ladoConfig){
+    const ladoClase = ladoConfig.lado === "izq" ? "bracket-left" : "bracket-right";
+
+    return `
+        <div class="bracket-side ${ladoClase}">
+            ${ladoConfig.grupos.map((grupo, index) => `
+                <div class="bracket-cluster">
+                    <div class="bracket-round bracket-r32">
+                        ${grupo.ronda32.map(id => crearPartidoBracketHTML(id, "bracket-r32-match")).join("")}
+                    </div>
+
+                    <div class="bracket-connector bracket-connector-a"></div>
+
+                    <div class="bracket-round bracket-r16">
+                        ${crearPartidoBracketHTML(grupo.octavos, "bracket-r16-match")}
+                    </div>
+
+                    ${index % 2 === 0 ? `<div class="bracket-connector bracket-connector-b"></div>` : ""}
+
+                    <div class="bracket-round bracket-qf">
+                        ${index % 2 === 0 ? crearPartidoBracketHTML(grupo.cuartos, "bracket-qf-match") : ""}
+                    </div>
+                </div>
+            `).join("")}
+        </div>
+    `;
+}
+
+function crearCentroBracketHTML(){
+    const semi1 = getPartidoGlobalKO(101);
+    const semi2 = getPartidoGlobalKO(102);
+    const tercero = getPartidoGlobalKO(103);
+    const final = getPartidoGlobalKO(104);
+    const campeon = getNombreEquipoBracket(final?.pasa);
+
+    return `
+        <div class="bracket-center">
+            <div class="bracket-title-card">
+                <h1>BRACKET <span class="titulo-acento">AL MOMENTO</span></h1>
+                <p>Se actualiza automáticamente con Knockout y Rank.</p>
+            </div>
+
+            <div class="bracket-trophy">🏆</div>
+
+            <div class="bracket-semis">
+                ${crearPartidoBracketHTML(101, "bracket-semi-match")}
+                ${crearPartidoBracketHTML(102, "bracket-semi-match")}
+            </div>
+
+            <div class="bracket-final-card">
+                <div class="bracket-final-label">FINAL · 19/JUL · NY</div>
+                ${crearPartidoBracketHTML(104, "bracket-final-match")}
+                <div class="bracket-champion">
+                    <span>Campeón</span>
+                    <strong>${campeon === "Por definir" ? "Por definir" : crearHTMLPaisConBandera(campeon)}</strong>
+                </div>
+            </div>
+
+            <div class="bracket-third-card">
+                <span>3er Lugar</span>
+                ${crearPartidoBracketHTML(103, "bracket-third-match")}
+            </div>
+        </div>
+    `;
+}
+
+
+function crearHTMLGruposBracket(){
+    const grupos = "ABCDEFGHIJKL".split("");
+
+    return `
+        <div class="bracket-groups-strip">
+            <h2>GROUPS</h2>
+            <div class="bracket-groups-grid">
+                ${grupos.map(grupo => {
+                    const equipos = getEquiposPorGrupo(grupo);
+                    return `
+                        <div class="bracket-group-col">
+                            <strong>${grupo}</strong>
+                            ${equipos.map(equipo => `
+                                <img src="${getFlag(equipo)}" alt="${equipo}" title="${equipo}" loading="lazy">
+                            `).join("")}
+                        </div>
+                    `;
+                }).join("")}
+            </div>
+        </div>
+    `;
+}
+
+function crearHTMLBracketVisual(){
+    return `
+        <h1>BRACKET <span class="titulo-acento">MUNDIAL</span></h1>
+        ${crearHTMLBotonesEspeciales("bracket")}
+        <p class="subtexto">Bracket dinámico de Knockout. Los equipos avanzan automáticamente conforme se capturan resultados.</p>
+
+        <div class="bracket-scroll-hint">Desliza horizontalmente para ver todo el bracket ↔</div>
+
+        <div class="bracket-scroll">
+            <div class="bracket-board">
+                ${crearColumnaBracketHTML(bracketVisualConfig[0])}
+                ${crearCentroBracketHTML()}
+                ${crearColumnaBracketHTML(bracketVisualConfig[1])}
+                ${crearHTMLGruposBracket()}
+            </div>
+        </div>
+    `;
+}
+
+
+
+function crearHTMLPodioEspecial(){
+    const categoria = categoriasPodio.includes(categoriaPodioActual) ? categoriaPodioActual : "campeon";
+    const resumen = getResumenEspecial(categoria);
+    const porcentajeFavorito = resumen.total > 0
+        ? Math.round((resumen.favoritoCantidad / resumen.total) * 100)
+        : 0;
+
+    const listaUsuarios = [...usuarios]
+        .sort((a,b) => a.nombre.localeCompare(b.nombre, "es"))
+        .map(u => `
+            <div class="especial-row">
+                <span>${u.nombre}</span>
+                <strong>${crearHTMLPickEspecialConBandera(categoria, u[resumen.config.campo])}</strong>
+            </div>
+        `).join("");
+
+    const conteoHTML = resumen.ordenados.map(([pick, cantidad]) => {
+        const porcentaje = resumen.total > 0
+            ? Math.round((cantidad / resumen.total) * 100)
+            : 0;
+
+        return `
+            <div class="especial-row especial-row-conteo">
+                <span>${crearHTMLPickEspecialConBandera(categoria, pick)}</span>
+                <strong>${cantidad} · ${porcentaje}%</strong>
+            </div>
+        `;
+    }).join("");
+
+    const panelActual = categoria === "goleador" && vistaEspecialActual === "standing"
+        ? "standing"
+        : (vistaEspecialActual === "usuarios" ? "usuarios" : "conteo");
+
+    return `
+        <h1>PICKS <span class="titulo-acento">ESPECIALES</span></h1>
+
+        ${crearHTMLBotonesEspeciales("podio")}
+
+        <div class="podio-wrapper">
+            <h2>🏆 Podio</h2>
+            <p class="subtexto">Consulta agrupada de Primero, Segundo, Tercero y Goleador.</p>
+            ${crearHTMLBotonesPodio(categoria)}
+        </div>
+
+        <div class="stats-grid especiales-resumen-grid">
+            <div class="stat-card">
+                <h2>${resumen.config.icono}</h2>
+                <p>${resumen.config.titulo}</p>
+            </div>
+
+            <div class="stat-card">
+                <h2 class="stat-pais-favorito">${crearHTMLPickEspecialConBandera(categoria, resumen.favorito)}</h2>
+                <p>Favorito de la comunidad · ${resumen.favoritoCantidad} picks · ${porcentajeFavorito}%</p>
+            </div>
+
+            <div class="stat-card">
+                <h2>${resumen.opcionesDistintas}</h2>
+                <p>Opciones distintas</p>
+            </div>
+        </div>
+
+        ${crearHTMLBotonesVistaEspecial(categoria, panelActual)}
+
+        <div class="especiales-layout especiales-layout-unico">
+            ${panelActual === "standing" ? crearHTMLStandingGoleador() : (panelActual === "conteo" ? `
+                <div class="especial-panel">
+                    <h3>Conteo general</h3>
+                    ${conteoHTML}
+                </div>
+            ` : `
+                <div class="especial-panel">
+                    <h3>Picks por usuario</h3>
+                    ${listaUsuarios}
+                </div>
+            `)}
+        </div>
+    `;
+}
+
 function crearHTMLEspecial(categoria){
+
+    if(categoria === "podio"){
+        return crearHTMLPodioEspecial();
+    }
 
     if(categoria === "records"){
         return crearHTMLRecordsStats();
+    }
+
+    if(categoria === "bracket"){
+        return crearHTMLBracketVisual();
     }
 
     if(categoria === "clasificados"){
@@ -645,7 +976,7 @@ function crearHTMLEspecial(categoria){
     `;
 }
 
-function mostrarEstadisticas(categoriaEspecial = categoriaEspecialActual, vistaEspecial = "conteo", grupoClasificados = grupoClasificadosActual, conservarScroll = false){
+function mostrarEstadisticas(categoriaEspecial = categoriaEspecialActual, vistaEspecial = "conteo", grupoClasificados = grupoClasificadosActual, conservarScroll = false, categoriaPodio = categoriaPodioActual){
 
     const scrollActual = window.scrollY || document.documentElement.scrollTop || 0;
 
@@ -656,9 +987,13 @@ function mostrarEstadisticas(categoriaEspecial = categoriaEspecialActual, vistaE
         });
     }
 
-    categoriaEspecialActual = categoriasEspeciales[categoriaEspecial]
+    categoriaEspecialActual = categoriasStatsPrincipales.includes(categoriaEspecial)
         ? categoriaEspecial
-        : "campeon";
+        : "bracket";
+
+    if(categoriaEspecialActual === "podio" && categoriasPodio.includes(categoriaPodio)){
+        categoriaPodioActual = categoriaPodio;
+    }
 
     vistaEspecialActual = ["usuarios", "standing"].includes(vistaEspecial) ? vistaEspecial : "conteo";
 
@@ -671,6 +1006,7 @@ function mostrarEstadisticas(categoriaEspecial = categoriaEspecialActual, vistaE
 
         ${getFooterCopyright()}
     `;
+
 
     if(conservarScroll){
         requestAnimationFrame(() => {
