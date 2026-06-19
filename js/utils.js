@@ -109,7 +109,7 @@ function getClaseStatus(status){
 }
 
 function getFooterCopyright(){
-    return `<div class="dev-footer">© Moy · 2026 (v.3.1.1)</div>`;
+    return `<div class="dev-footer">© Moy · 2026 (v.3.1.2)</div>`;
 }
 
 function getPrediccionColectiva(partidoId){

@@ -144,18 +144,16 @@ function mostrarReglasPremios(){
 }
 
 
-function mostrarLeeme(){
 
-    contenido.innerHTML = `
-        <button onclick="mostrarInicio()" class="btnVolver">⬅ Regresar</button>
+let leemeMensajeActual = 0;
 
-        <h1>AVISOS <span class="titulo-acento">QUINIELA</span></h1>
+const mensajesLeeme = [
+    {
+        fecha: "17.Junio.2026 9:42pm",
+        titulo: "Actualización v3.0",
+        texto: `Hola quiniel@s, disfrutando el Mundial? ya se nos fue la jornada 1 y esto aun le falta!, En este espacio estaré informándoles cosas interesantes que se vienen.<br><br>
 
-        <div class="leeme-card">
-            <p><strong>Last update: 17.Junio.2026 9:42pm</strong></p>
-            <p>Hola quiniel@s, disfrutando el Mundial? ya se nos fue la jornada 1 y esto aun le falta!, En este espacio estaré informándoles cosas interesantes que se vienen.<br><br>
-
-Les comparto la versión 3.0 que incluye la segunda fase completa, váyanla checando y entendiendo que son muchos Standings que ir monitoreando! no nada más es la etapa de grupos, esto conforme a las Reglas y Premios acordados, LÉANLOS! si aún no lo han hecho.<br><br>
+Les comparto la versión 3.0 que incluye la segunda fase completa, váyanla checando y entendiendo que son muchos Standings que ir monitorear! no nada más es la etapa de grupos, esto conforme a las Reglas y Premios acordados, LÉANLOS! si aún no lo han hecho.<br><br>
 
 Traté de poner todo de manera super detallada y transparente para que todos puedan ver el detalle de cada sección y como se conforman los puntos de cada categoría.<br><br>
 
@@ -165,9 +163,59 @@ Toda la APP es 100% dinámica, con 1 solo gol se calcula absolutamente todo, as�
 
 Les adelanto: para la fase de 32, habrá dos opciones: 1. Conservar sus picks originales que llenaron ANTES de que comenzara el mundial o 2. Volver a hacer nuevos Picks, pero en esta ocasion serán ANTES de comenzar la Fase de 32. Váyanle viendo y en su momento les diré como hacer su nuevos picks. Desde luego que les recomiendo esta opción, pero como quieran.<br><br>
 
-Bueno aqui sigo, me falta desarrollar los Standings de los Goleadores, e integrarlos al final, y otras monerias. Pero a su tiempo. 
- 
-</p>
+Bueno aqui sigo, me falta desarrollar los Standings de los Goleadores, e integrarlos al final, y otras monerias. Pero a su tiempo.`
+    },
+    {
+        fecha: "18.Junio.2026 10:14pm",
+        titulo: "Integración del Bracket",
+        texto: `Se agregó la opción <b>Bracket Mundialista.</b> Pueden consultarla en la sección <b>Stats.</b> Además, lo pueden exportar como imagen en formato <b>PNG.</b> El bracket es dinámico, osea que las posiciones se actualizan automáticamente conforme se registran los resultados de los partidos.
+`
+    },
+    {
+        fecha: "19.Junio.2026 06:22pm",
+        titulo: "Picks de Ronda 32",
+        texto: `En este espacio les explicaré cómo registrar o modificar sus picks para la <b>Ronda de 32.</b> ¡Esténse atentos!`
+    }
+];
+
+function crearHTMLMensajeLeeme(){
+    const total = mensajesLeeme.length;
+    const idx = Math.min(Math.max(leemeMensajeActual, 0), total - 1);
+    leemeMensajeActual = idx;
+    const msg = mensajesLeeme[idx];
+
+    return `
+        <div class="leeme-historial-barra">
+            <button onclick="cambiarMensajeLeeme(-1)" ${idx <= 0 ? "disabled" : ""}>‹ Anterior</button>
+            <span>${idx + 1} / ${total}</span>
+            <button onclick="cambiarMensajeLeeme(1)" ${idx >= total - 1 ? "disabled" : ""}>Siguiente ›</button>
+        </div>
+
+        <div class="leeme-card" id="leemeCard">
+            <p><strong>Last update: ${msg.fecha}</strong></p>
+            <p><strong>${msg.titulo}</strong></p>
+            <p>${msg.texto}</p>
+        </div>
+    `;
+}
+
+function cambiarMensajeLeeme(delta){
+    leemeMensajeActual += Number(delta) || 0;
+    const contenedor = document.getElementById("leemeContenido");
+    if(contenedor){
+        contenedor.innerHTML = crearHTMLMensajeLeeme();
+    }
+}
+
+function mostrarLeeme(){
+
+    contenido.innerHTML = `
+        <button onclick="mostrarInicio()" class="btnVolver">⬅ Regresar</button>
+
+        <h1>AVISOS <span class="titulo-acento">QUINIELA</span></h1>
+
+        <div id="leemeContenido">
+            ${crearHTMLMensajeLeeme()}
         </div>
 
         ${getFooterCopyright()}
@@ -178,3 +226,4 @@ Bueno aqui sigo, me falta desarrollar los Standings de los Goleadores, e integra
         behavior: "smooth"
     });
 }
+

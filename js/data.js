@@ -246,3 +246,111 @@ async function cargarPicksKO(){
         };
     });
 }
+
+/* =========================================================
+   GOLEADORES ESPN · Top 10 con fallback seguro
+   ---------------------------------------------------------
+   Intenta leer el ranking público de ESPN. Si CORS, red o
+   estructura HTML fallan, conserva 10 lugares Por Definir.
+   ========================================================= */
+function crearGoleadoresFallback(){
+    return Array.from({length:10}, (_, i) => ({
+        pos: i + 1,
+        nombre: "Por Definir",
+        nombreCorto: "Por Definir",
+        pais: "",
+        abbr: "",
+        goles: 0,
+        fallback: true
+    }));
+}
+
+function quitarAcentosTexto(valor){
+    return (valor || "")
+        .toString()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+}
+
+function abreviarNombreGoleador(nombre){
+    const limpio = (nombre || "").toString().trim().replace(/\s+/g, " ");
+    if(!limpio || limpio.toLowerCase().includes("por definir")) return "Por Definir";
+    const partes = limpio.split(" ").filter(Boolean);
+    if(partes.length === 1) return partes[0];
+    return `${partes[0].charAt(0).toUpperCase()}.${partes.slice(1).join(" ")}`;
+}
+
+function abreviarPaisGoleador(pais){
+    const limpio = quitarAcentosTexto(pais || "").trim();
+    const key = limpio.toLowerCase();
+    const excepciones = {
+        "nueva zelanda": "NZL",
+        "estados unidos": "USA",
+        "republica democratica del congo": "CON",
+        "rd congo": "CON",
+        "congo": "CON",
+        "paises bajos": "NED",
+        "holanda": "NED"
+    };
+    if(excepciones[key]) return excepciones[key];
+    return limpio ? limpio.slice(0, 3).toUpperCase() : "";
+}
+
+function extraerTextoCeldaGoleador(celda){
+    return (celda?.innerText || celda?.textContent || "").replace(/\s+/g, " ").trim();
+}
+
+function parsearGoleadoresESPN(html){
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    const tablas = [...doc.querySelectorAll("table")];
+    const filas = tablas.flatMap(tabla => [...tabla.querySelectorAll("tbody tr")]);
+    const salida = [];
+
+    filas.forEach(fila => {
+        if(salida.length >= 10) return;
+        const celdas = [...fila.querySelectorAll("td")];
+        if(celdas.length < 3) return;
+
+        const textos = celdas.map(extraerTextoCeldaGoleador).filter(Boolean);
+        const pos = Number((textos[0] || "").match(/\d+/)?.[0]);
+        if(!Number.isFinite(pos)) return;
+
+        const goles = Number((textos[textos.length - 1] || "").match(/\d+/)?.[0] || 0);
+        const candidatoNombre = textos.find((t, idx) => idx > 0 && /[A-Za-zÁÉÍÓÚÑáéíóúñ]/.test(t) && !/^\d+$/.test(t)) || "Por Definir";
+        let pais = "";
+
+        for(let i = 2; i < textos.length - 1; i++){
+            const t = textos[i];
+            if(/[A-Za-zÁÉÍÓÚÑáéíóúñ]/.test(t) && t !== candidatoNombre){
+                pais = t;
+                break;
+            }
+        }
+
+        salida.push({
+            pos,
+            nombre: candidatoNombre,
+            nombreCorto: abreviarNombreGoleador(candidatoNombre),
+            pais,
+            abbr: abreviarPaisGoleador(pais),
+            goles,
+            fallback: false
+        });
+    });
+
+    return salida.slice(0, 10);
+}
+
+async function cargarGoleadores(){
+    try{
+        const res = await fetch(urlGoleadoresESPN, { cache: "no-store" });
+        if(!res.ok) throw new Error(`ESPN ${res.status}`);
+        const html = await res.text();
+        const lista = parsearGoleadoresESPN(html);
+        goleadores = lista.length ? lista : crearGoleadoresFallback();
+    }
+    catch(error){
+        console.warn("No se pudo cargar ESPN goleadores. Usando fallback.", error);
+        goleadores = crearGoleadoresFallback();
+    }
+}

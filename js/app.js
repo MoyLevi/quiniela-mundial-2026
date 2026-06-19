@@ -15,7 +15,7 @@ async function actualizarDatos(){
 
         if(boton){
             boton.disabled = true;
-            boton.innerHTML = `<img id="balonRefresh" class="balon-app balon-actualizando" src="img/trionda.png" alt="Balón"> Actualizando...`;
+            boton.innerHTML = `<img id="balonRefresh" class="balon-app balon-actualizando" src="img/trionda.png" alt="Balón"> Wait...`;
         }
 
         await cargarPartidos();
@@ -25,6 +25,9 @@ async function actualizarDatos(){
         await cargarKnockout();
         await cargarRankKO();
         await cargarPicksKO();
+        if(typeof cargarGoleadores === "function"){
+            await cargarGoleadores();
+        }
 
         if(typeof precalcularRankings === "function"){
             precalcularRankings();
@@ -56,6 +59,9 @@ async function iniciarApp(){
         await cargarKnockout();
         await cargarRankKO();
         await cargarPicksKO();
+        if(typeof cargarGoleadores === "function"){
+            await cargarGoleadores();
+        }
 
         if(typeof precalcularRankings === "function"){
             precalcularRankings();

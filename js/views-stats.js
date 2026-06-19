@@ -179,19 +179,33 @@ function crearHTMLBotonesVistaEspecial(categoria, vistaActiva){
     `;
 }
 
+
 function crearHTMLStandingGoleador(){
+    const lista = Array.isArray(goleadores) && goleadores.length
+        ? goleadores.slice(0, 10)
+        : crearGoleadoresFallback();
+
     return `
-        <div class="especial-panel">
+        <div class="especial-panel goleadores-panel">
             <h3>Standing Goleador</h3>
-            ${Array.from({length:10}, (_, i) => `
-                <div class="especial-row especial-row-conteo">
-                    <span>${i + 1}. (Por Definir)</span>
-                    <strong>0 goles</strong>
-                </div>
-            `).join("")}
+            ${lista.map(g => {
+                const pais = g.pais || "";
+                const bandera = pais ? `<img src="${getFlag(pais)}" alt="${pais}" class="flag-mini">` : "";
+                const abbr = g.abbr ? ` (${g.abbr})` : "";
+                const nombre = g.nombreCorto || "Por Definir";
+                const golesTexto = g.fallback ? "0 goles" : `${g.goles} ${Number(g.goles) === 1 ? "gol" : "goles"}`;
+
+                return `
+                    <div class="especial-row especial-row-conteo goleador-row">
+                        <span><strong>${g.pos}</strong> ${nombre} ${bandera}${abbr}</span>
+                        <strong>${golesTexto}</strong>
+                    </div>
+                `;
+            }).join("")}
         </div>
     `;
 }
+
 
 
 function getLugaresProGrupos(){
@@ -807,13 +821,13 @@ function crearHTMLGruposBracket(){
             <h2>Grupos</h2>
             <div class="bracket-groups-grid">
                 ${grupos.map(grupo => {
-                    const equipos = getEquiposPorGrupo(grupo);
+                    const equipos = completarTablaGrupoProvisional(grupo).map(e => e.nombre);
                     return `
                         <div class="bracket-group-col">
                             <strong>${grupo}</strong>
                             ${equipos.map(equipo => `
                                 <div class="bracket-group-team" title="${equipo}">
-                                    <img src="${getFlag(equipo)}" alt="${equipo}" loading="lazy">
+                                    <img src="${getFlag(equipo)}" alt="${equipo}" loading="lazy" crossorigin="anonymous">
                                     ${crearEstadoVidaBracketHTML(equipo, grupo)}
                                 </div>
                             `).join("")}
@@ -825,16 +839,53 @@ function crearHTMLGruposBracket(){
     `;
 }
 
+
+async function exportarBracketImagen(){
+    const board = document.getElementById("bracketBoardExport");
+    if(!board){
+        alert("No se encontró el bracket para exportar.");
+        return;
+    }
+
+    if(!window.html2canvas){
+        alert("No se pudo cargar el generador de imagen. Intenta de nuevo más tarde.");
+        return;
+    }
+
+    try{
+        const canvas = await html2canvas(board, {
+            backgroundColor: "#0f172a",
+            scale: 2,
+            useCORS: true,
+            allowTaint: true,
+            logging: false
+        });
+
+        const link = document.createElement("a");
+        link.download = `bracket-mundial-2026-${new Date().toISOString().slice(0,10)}.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+    }
+    catch(error){
+        console.error(error);
+        alert("No se pudo exportar el bracket como imagen.");
+    }
+}
+
 function crearHTMLBracketVisual(){
     return `
         <h1>BRACKET <span class="titulo-acento">MUNDIAL</span></h1>
         ${crearHTMLBotonesEspeciales("bracket")}
         <p class="subtexto">Bracket dinámico de Knockout. Los equipos avanzan automáticamente conforme se capturan resultados.</p>
 
+        <div class="bracket-export-actions">
+            <button onclick="exportarBracketImagen()">Exportar como Imagen</button>
+        </div>
+
         <div class="bracket-scroll-hint">Desliza horizontalmente para ver todo el bracket ↔</div>
 
         <div class="bracket-scroll">
-            <div class="bracket-board">
+            <div class="bracket-board" id="bracketBoardExport">
                 ${crearColumnaBracketHTML(bracketVisualConfig[0])}
                 ${crearCentroBracketHTML()}
                 ${crearColumnaBracketHTML(bracketVisualConfig[1])}
