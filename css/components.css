@@ -1947,3 +1947,421 @@
     display:inline-block;
     margin-right:0;
 }
+
+/* =========================================================
+   BRACKET VISUAL DINÁMICO · v3.0.2
+   ========================================================= */
+.bracket-scroll-hint{
+    text-align:center;
+    color:#94a3b8;
+    font-size:13px;
+    margin:8px 0 12px;
+}
+
+.bracket-zoom-controls{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:8px;
+    margin:0 0 12px;
+}
+
+.bracket-zoom-controls button{
+    border:1px solid rgba(255,255,255,.18);
+    background:rgba(15,23,42,.86);
+    color:#f8fafc;
+    border-radius:999px;
+    padding:7px 13px;
+    font-weight:900;
+    font-size:13px;
+    box-shadow:0 6px 14px rgba(0,0,0,.22);
+}
+
+.bracket-zoom-controls button:active{
+    transform:scale(.96);
+    background:rgba(30,64,175,.9);
+}
+
+.bracket-scroll{
+    width:100%;
+    overflow:auto;
+    padding:8px 0 20px;
+    -webkit-overflow-scrolling:touch;
+    touch-action:none;
+    cursor:grab;
+}
+
+.bracket-scroll:active{
+    cursor:grabbing;
+}
+
+.bracket-board{
+    transform-origin:center center;
+    min-width:1600px;
+    max-width:none;
+    width:max-content;
+    margin:0 auto;
+    padding:28px 36px;
+    border-radius:28px;
+    background:
+        radial-gradient(circle at center, rgba(56,189,248,.18) 0%, rgba(15,23,42,.18) 30%, rgba(15,23,42,.92) 72%),
+        linear-gradient(180deg, #0876b8 0%, #0f3a70 46%, #0b1733 100%);
+    display:grid;
+    grid-template-columns:560px 380px 560px;
+    gap:28px;
+    box-shadow:0 18px 40px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.08);
+    position:relative;
+}
+
+.bracket-side{
+    display:grid;
+    grid-template-rows:repeat(4, minmax(125px, auto));
+    gap:16px;
+}
+
+.bracket-cluster{
+    display:grid;
+    grid-template-columns:168px 26px 168px 26px 168px;
+    grid-template-areas:"r32 ca r16 cb qf";
+    align-items:center;
+    min-height:126px;
+}
+
+/* Lado derecho en espejo perfecto:
+   Cuartos hacia el centro, Octavos al medio, R32 hasta la orilla derecha. */
+.bracket-right .bracket-cluster{
+    grid-template-areas:"qf cb r16 ca r32";
+}
+
+.bracket-round{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+
+.bracket-r32{ grid-area:r32; }
+.bracket-r16{ grid-area:r16; }
+.bracket-qf{ grid-area:qf; }
+.bracket-connector-a{ grid-area:ca; }
+.bracket-connector-b{ grid-area:cb; }
+
+.bracket-match{
+    background:rgba(15,23,42,.82);
+    border:1px solid rgba(255,255,255,.13);
+    border-radius:16px;
+    padding:8px;
+    box-shadow:0 8px 18px rgba(0,0,0,.28);
+    color:#fff;
+    min-height:76px;
+}
+
+.bracket-finalizado{
+    border-color:rgba(34,197,94,.55);
+    box-shadow:0 8px 18px rgba(0,0,0,.28), 0 0 0 1px rgba(34,197,94,.18);
+}
+
+.bracket-meta{
+    display:flex;
+    justify-content:space-between;
+    gap:4px;
+    align-items:center;
+    color:#cbd5e1;
+    font-size:10px;
+    line-height:1.1;
+    margin-bottom:5px;
+}
+
+.bracket-meta strong{
+    color:#f8fafc;
+    font-size:10px;
+    font-weight:800;
+    white-space:nowrap;
+}
+
+.bracket-meta em{
+    font-style:normal;
+    color:#bae6fd;
+    max-width:70px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.bracket-teams{
+    display:grid;
+    grid-template-columns:1fr auto 1fr;
+    align-items:center;
+    gap:5px;
+}
+
+.bracket-team{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:3px;
+    min-width:0;
+}
+
+.bracket-team img,
+.bracket-flag-placeholder{
+    width:36px;
+    height:24px;
+    border-radius:6px;
+    object-fit:cover;
+    box-shadow:0 3px 8px rgba(0,0,0,.35);
+    background:#1e293b;
+}
+
+.bracket-flag-placeholder{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#94a3b8;
+    font-size:9px;
+    font-weight:800;
+    border:1px dashed rgba(148,163,184,.45);
+}
+
+.bracket-team span{
+    font-size:10px;
+    font-weight:800;
+    text-align:center;
+    line-height:1.05;
+    max-width:58px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+.bracket-team-winner span{
+    color:#facc15;
+}
+
+.bracket-team-winner img{
+    box-shadow:0 0 0 2px #facc15, 0 3px 8px rgba(0,0,0,.35);
+}
+
+.bracket-score{
+    color:#fff;
+    font-size:12px;
+    font-weight:900;
+    text-align:center;
+    min-width:42px;
+}
+
+.bracket-score .penales-numero{
+    color:#22c55e;
+    font-size:10px;
+}
+
+.bracket-winner{
+    margin-top:5px;
+    text-align:center;
+    font-size:10px;
+    color:#94a3b8;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+.bracket-connector{
+    height:2px;
+    background:rgba(255,255,255,.42);
+    border-radius:999px;
+    position:relative;
+}
+
+/* conectores ubicados con grid-area para que ambos lados queden alineados */
+
+.bracket-center{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+    min-height:680px;
+}
+
+.bracket-title-card{
+    text-align:center;
+}
+
+.bracket-title-card h1{
+    margin:0;
+    font-size:45px;
+    line-height:.95;
+    text-shadow:0 4px 12px rgba(0,0,0,.25);
+}
+
+.bracket-title-card p{
+    margin:8px 0 0;
+    color:#dbeafe;
+    font-size:13px;
+}
+
+.bracket-trophy{
+    font-size:110px;
+    line-height:1;
+    filter:drop-shadow(0 12px 22px rgba(0,0,0,.48));
+}
+
+.bracket-semis{
+    width:100%;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+}
+
+.bracket-final-card,
+.bracket-third-card{
+    width:100%;
+    background:rgba(15,23,42,.62);
+    border:1px solid rgba(255,255,255,.12);
+    border-radius:22px;
+    padding:12px;
+    box-shadow:0 10px 25px rgba(0,0,0,.25);
+}
+
+.bracket-final-label{
+    color:#facc15;
+    text-align:center;
+    font-family:'Bebas Neue', sans-serif;
+    font-size:30px;
+    letter-spacing:1px;
+    margin-bottom:8px;
+}
+
+.bracket-final-match{
+    min-height:94px;
+    background:rgba(30,41,59,.95);
+}
+
+.bracket-champion{
+    margin-top:10px;
+    text-align:center;
+}
+
+.bracket-champion span,
+.bracket-third-card > span{
+    display:block;
+    color:#93c5fd;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    font-size:11px;
+    margin-bottom:4px;
+}
+
+.bracket-champion strong{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    color:#facc15;
+    font-size:20px;
+}
+
+.bracket-champion .pais-con-bandera{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+}
+
+.bracket-third-card .bracket-match{
+    background:rgba(30,41,59,.88);
+}
+
+@media(max-width:600px){
+    .bracket-scroll-hint{
+        display:block;
+    }
+
+    .bracket-board{
+        min-width:1540px;
+        padding:22px 30px;
+        gap:22px;
+    }
+
+    .bracket-title-card h1{
+        font-size:38px;
+    }
+}
+
+.bracket-groups-strip{
+    grid-column:1 / -1;
+    margin-top:12px;
+    padding-top:16px;
+    border-top:3px solid rgba(255,255,255,.82);
+    text-align:center;
+}
+
+.bracket-groups-strip h2{
+    margin:0 0 10px;
+    color:#f8fafc;
+    font-family:'Bebas Neue', sans-serif;
+    font-size:34px;
+    letter-spacing:1px;
+}
+
+.bracket-groups-grid{
+    display:grid;
+    grid-template-columns:repeat(12, 1fr);
+    gap:9px;
+}
+
+.bracket-group-col{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:5px;
+}
+
+.bracket-group-col strong{
+    color:#f8fafc;
+    font-family:'Bebas Neue', sans-serif;
+    font-size:30px;
+    line-height:1;
+}
+
+.bracket-group-col img{
+    width:38px;
+    height:25px;
+    object-fit:cover;
+    border-radius:6px;
+    box-shadow:0 3px 8px rgba(0,0,0,.35);
+}
+
+/* Ajustes v3.0.7: Podio agrupado y Bracket sin zoom */
+.podio-wrapper{
+    margin: 16px 0 18px;
+    padding: 14px;
+    border-radius: 18px;
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.12);
+}
+.podio-wrapper h2{
+    margin: 0 0 6px;
+    color: #fff;
+}
+.tabs-stats-principales,
+.tabs-podio{
+    gap: 8px;
+}
+.bracket-scroll{
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x pan-y;
+}
+.bracket-board{
+    transform: none !important;
+}
+
+/* v3.0.7 final: Bracket sin zoom pesado y orden Stats final */
+.bracket-zoom-controls{ display:none !important; }
+.bracket-scroll{
+    overflow:auto !important;
+    -webkit-overflow-scrolling:touch;
+    touch-action:pan-x pan-y !important;
+    cursor:default !important;
+}
+.bracket-scroll:active{ cursor:default !important; }
+.bracket-board{ transform:none !important; }
