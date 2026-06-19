@@ -2439,3 +2439,66 @@
     .inicio-card-compacta h2{ font-size:22px; }
     .inicio-card-compacta p{ font-size:10px; }
 }
+
+
+/* v3.1.1 ajustes responsivos y visuales */
+/* 1. Botones KO más compactos en celular */
+.grupos-ko-grid.ko-grid{
+    grid-template-columns:repeat(6, minmax(0, 1fr));
+    gap:7px;
+}
+.grupos-ko-grid.ko-grid button,
+.ko-grid button{
+    min-width:0 !important;
+    padding-left:4px;
+    padding-right:4px;
+    font-size:13px;
+    white-space:nowrap;
+}
+@media(max-width:420px){
+    .grupos-ko-grid.ko-grid{ gap:6px; }
+    .grupos-ko-grid.ko-grid button,
+    .ko-grid button{
+        font-size:12px;
+        padding-left:3px;
+        padding-right:3px;
+        border-radius:10px;
+    }
+}
+@media(max-width:350px){
+    .grupos-ko-grid.ko-grid button,
+    .ko-grid button{ font-size:11px; }
+}
+
+/* 2. Movimiento sin guion largo: punto medio más limpio */
+.ranking-mov.mov-neutral{
+    transform:none;
+    font-size:28px;
+    letter-spacing:0;
+}
+
+/* 3. Alineación IN / OUT en el listado de grupos del Bracket */
+.bracket-group-team{
+    grid-template-columns:38px 30px;
+    justify-content:center;
+    column-gap:8px;
+}
+.bracket-life{
+    display:inline-block;
+    width:30px;
+    text-align:left;
+    margin-left:1px;
+}
+
+/* 4. Icono Trionda más visible en el cuadro de Goleador */
+.stat-card h2 .icono-trionda-mini{
+    width:44px;
+    height:44px;
+    vertical-align:middle;
+}
+@media(max-width:520px){
+    .stat-card h2 .icono-trionda-mini{
+        width:38px;
+        height:38px;
+    }
+}
