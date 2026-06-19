@@ -33,7 +33,7 @@ function getFlag(country){
         "ghana": "gh",
         "haiti": "ht",
         "holanda": "nl",
-        "inglaterra": "gb",
+        "inglaterra": "gb-eng",
         "iran": "ir",
         "iraq": "iq",
         "japon": "jp",
@@ -109,7 +109,7 @@ function getClaseStatus(status){
 }
 
 function getFooterCopyright(){
-    return `<div class="dev-footer">© Moy · 2026 (v.3.1.0)</div>`;
+    return `<div class="dev-footer">© Moy · 2026 (v.3.1.1)</div>`;
 }
 
 function getPrediccionColectiva(partidoId){

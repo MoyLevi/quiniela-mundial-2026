@@ -84,7 +84,7 @@ function getMovimientoRanking(posAnterior, posActual){
 
     if(!posAnterior){
         return {
-            icono: "—",
+            icono: "·",
             clase: "mov-neutral",
             titulo: "Sin historial previo"
         };
@@ -107,7 +107,7 @@ function getMovimientoRanking(posAnterior, posActual){
     }
 
     return {
-        icono: "—",
+        icono: "·",
         clase: "mov-neutral",
         titulo: "Se mantuvo"
     };
