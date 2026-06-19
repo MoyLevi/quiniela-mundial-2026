@@ -748,10 +748,10 @@
 .filtros-botones{
     max-width:850px;
     margin:20px auto 25px;
-    background:#1e293b;
-    border-radius:18px;
-    padding:18px;
-    box-shadow:0 8px 20px rgba(0,0,0,.25);
+    background:transparent;
+    border-radius:0;
+    padding:0;
+    box-shadow:none;
 }
 
 .filtros-botones h3{
@@ -2365,3 +2365,77 @@
 }
 .bracket-scroll:active{ cursor:default !important; }
 .bracket-board{ transform:none !important; }
+
+
+/* v3.0.8 ajustes inicio, bracket y stats */
+.acciones-inicio-compactas{
+    display:grid;
+    grid-template-columns:repeat(4, minmax(0, 1fr));
+    gap:8px;
+    max-width:520px;
+    margin:10px auto 8px;
+    padding:0 4px;
+}
+.acciones-inicio-compactas button{
+    background:#2563eb;
+    color:#fff;
+    border:none;
+    border-radius:11px;
+    padding:9px 7px;
+    font-weight:800;
+    font-size:13px;
+    cursor:pointer;
+    box-shadow:0 6px 16px rgba(37,99,235,.22);
+    white-space:nowrap;
+}
+.acciones-inicio-compactas .btn-leeme{ background:#dc2626; box-shadow:0 6px 16px rgba(220,38,38,.22); }
+.acciones-inicio-compactas .btn-premios{ background:#334155; }
+.acciones-inicio-compactas .btn-refresh-compacto{ background:#1e293b; border:1px solid rgba(56,189,248,.35); }
+.refresh-container-simple{ margin-bottom:12px; }
+.inicio-grid-compacta{
+    grid-template-columns:repeat(4, minmax(0, 1fr));
+    gap:8px;
+    max-width:760px;
+}
+.inicio-card-compacta{
+    padding:12px 7px;
+    border-radius:14px;
+}
+.inicio-card-compacta h2{
+    font-size:25px;
+}
+.inicio-card-compacta p{
+    font-size:11px;
+    line-height:1.15;
+    margin:6px 0 0;
+}
+.icono-trionda-mini{
+    width:22px;
+    height:22px;
+    object-fit:contain;
+    vertical-align:-4px;
+    display:inline-block;
+}
+.bracket-group-team{
+    display:grid;
+    grid-template-columns:38px auto;
+    align-items:center;
+    gap:5px;
+    min-width:64px;
+}
+.bracket-life{
+    font-size:10px;
+    font-weight:900;
+    letter-spacing:.3px;
+    line-height:1;
+}
+.bracket-life-in{ color:#22c55e; }
+.bracket-life-out{ color:#ef4444; }
+@media(max-width:520px){
+    .acciones-inicio-compactas{ gap:6px; }
+    .acciones-inicio-compactas button{ font-size:12px; padding:8px 5px; }
+    .inicio-grid-compacta{ grid-template-columns:repeat(4, minmax(0, 1fr)); gap:6px; }
+    .inicio-card-compacta{ padding:10px 5px; }
+    .inicio-card-compacta h2{ font-size:22px; }
+    .inicio-card-compacta p{ font-size:10px; }
+}
