@@ -32,6 +32,12 @@ async function actualizarDatos(){
         if(typeof precalcularRankings === "function"){
             precalcularRankings();
         }
+        if(typeof invalidarCacheBracketStats === "function"){
+            invalidarCacheBracketStats();
+        }
+        if(typeof precalcularBracketStats === "function"){
+            precalcularBracketStats();
+        }
 
         actualizarTimestamp();
         mostrarInicio();
@@ -65,6 +71,12 @@ async function iniciarApp(){
 
         if(typeof precalcularRankings === "function"){
             precalcularRankings();
+        }
+        if(typeof invalidarCacheBracketStats === "function"){
+            invalidarCacheBracketStats();
+        }
+        if(typeof precalcularBracketStats === "function"){
+            precalcularBracketStats();
         }
 
         actualizarTimestamp();

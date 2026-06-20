@@ -263,13 +263,39 @@ function getDatosDestacados(){
         return total + Number(partido.golesLoc) + Number(partido.golesVis);
     }, 0);
 
+    const porteriasCero = partidos.reduce((total, partido) => {
+        if(!partidoFinalizado(partido)){
+            return total;
+        }
+
+        const gl = Number(partido.golesLoc);
+        const gv = Number(partido.golesVis);
+        return total + (gv === 0 ? 1 : 0) + (gl === 0 ? 1 : 0);
+    }, 0);
+
+    const puntosGanados = picks.reduce((total, pick) => {
+        const partido = partidos.find(p => p.id === pick.partidoId);
+        return total + (partidoFinalizado(partido) ? getPuntos(partido, pick) : 0);
+    }, 0);
+
+    const picksJugados = picks.filter(pick => {
+        const partido = partidos.find(p => p.id === pick.partidoId);
+        return partidoFinalizado(partido);
+    }).length;
+
+    const efectividadGlobal = picksJugados > 0
+        ? Math.round((puntosGanados / (picksJugados * 3)) * 100)
+        : 0;
+
     return {
         totalPicks,
         exactos,
         diferencias,
         ganadores,
         fallos,
-        golesMarcados
+        golesMarcados,
+        efectividadGlobal,
+        porteriasCero
     };
 }
 
@@ -280,13 +306,15 @@ function crearHTMLDatosDestacados(){
     return `
         <h2>DATOS <span class="titulo-acento">DESTACADOS</span></h2>
 
-        <div class="stats-grid datos-destacados-records">
+        <div class="stats-grid datos-destacados-records datos-destacados-compactos">
             <div class="stat-card"><h2>${datos.totalPicks}</h2><p>Picks</p></div>
             <div class="stat-card"><h2>${datos.exactos}</h2><p>Exactos</p></div>
             <div class="stat-card"><h2>${datos.diferencias}</h2><p>Diferencia + ganador</p></div>
             <div class="stat-card"><h2>${datos.ganadores}</h2><p>Ganadores</p></div>
             <div class="stat-card"><h2>${datos.fallos}</h2><p>Fallos</p></div>
             <div class="stat-card"><h2>${datos.golesMarcados}</h2><p>Goles marcados</p></div>
+            <div class="stat-card"><h2>${datos.efectividadGlobal}%</h2><p>Efectividad global</p></div>
+            <div class="stat-card"><h2>${datos.porteriasCero}</h2><p>Porterías en cero</p></div>
         </div>
     `;
 }
@@ -634,6 +662,16 @@ function mostrarDetalleRecord(tipo, pagina = 1, scrollTitulo = false){
     mostrarTabla("records");
 }
 
+
+function getMejorExactosKnockout(){
+    const lista = typeof getRankingKO === "function" ? getRankingKO() : [];
+    return [...lista].sort((a,b) =>
+        (b.marcador || 0) - (a.marcador || 0) ||
+        (b.puntos || 0) - (a.puntos || 0) ||
+        (a.nombre || "").localeCompare(b.nombre || "", "es")
+    )[0] || null;
+}
+
 function crearHTMLRecordsTabla(){
 
     const ranking = getRanking();
@@ -642,6 +680,7 @@ function crearHTMLRecordsTabla(){
     const mejorExactos = [...ranking].sort((a,b) => b.exactos - a.exactos)[0];
     const mejorGanadores = [...ranking].sort((a,b) => b.ganadores - a.ganadores)[0];
     const mejorDiferencias = [...ranking].sort((a,b) => b.diferencias - a.diferencias)[0];
+    const mejorExactosKO = getMejorExactosKnockout();
     const partidoMayorEfectividad = getPartidoMayorEfectividad();
 
     return `
@@ -672,19 +711,26 @@ function crearHTMLRecordsTabla(){
             )}
 
             ${crearHTMLRecordCard(
-                "✅",
-                "Más ganadores",
-                mejorGanadores ? `${mejorGanadores.nombre} · ${mejorGanadores.ganadores}` : "-",
-                "Toca para ver la tabla completa",
-                "ganadores"
-            )}
-
-            ${crearHTMLRecordCard(
                 "📐",
                 "Más diferencia + ganador",
                 mejorDiferencias ? `${mejorDiferencias.nombre} · ${mejorDiferencias.diferencias}` : "-",
                 "Toca para ver la tabla completa",
                 "diferencias"
+            )}
+
+            ${crearHTMLRecordCard(
+                "⚔️",
+                "Más exactos en Knockout",
+                mejorExactosKO ? `${mejorExactosKO.nombre} · ${mejorExactosKO.marcador || 0}` : "-",
+                "Marcadores exactos en KO"
+            )}
+
+            ${crearHTMLRecordCard(
+                "✅",
+                "Más ganadores",
+                mejorGanadores ? `${mejorGanadores.nombre} · ${mejorGanadores.ganadores}` : "-",
+                "Toca para ver la tabla completa",
+                "ganadores"
             )}
 
             ${crearHTMLRecordCard(

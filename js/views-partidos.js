@@ -353,11 +353,13 @@ function verPartido(id){
 
     lista.forEach(r => {
 
-        const puntos = p.esKO ? getPuntosKO(p, r) : getPuntos(p, r);
+        const jugado = partidoFinalizado(p);
+        const puntos = jugado ? (p.esKO ? getPuntosKO(p, r) : getPuntos(p, r)) : 0;
         const usuario = usuarios.find(u => u.id === r.idUser);
+        const clasePronostico = jugado ? `pronostico-puntos-${Math.max(0, Math.min(3, Number(puntos) || 0))}` : "pronostico-pendiente";
 
         html += `
-            <div class="pronostico">
+            <div class="pronostico ${clasePronostico}">
                 <span><strong>${usuario ? usuario.nombre : "Usuario " + r.idUser}</strong></span>
                 <span>${p.esKO ? formatearPickKO(r) : `${r.golLoc}-${r.golVis}`}</span>
                 <span>${puntos} pts</span>

@@ -53,6 +53,17 @@ let categoriaEspecialActual = "bracket";
 let categoriaPodioActual = "campeon";
 let vistaEspecialActual = "conteo";
 let grupoClasificadosActual = "A";
+let cacheBracketVisualStats = null;
+
+function invalidarCacheBracketStats(){
+    cacheBracketVisualStats = null;
+}
+
+function precalcularBracketStats(){
+    cacheBracketVisualStats = crearHTMLBracketVisualBase();
+    return cacheBracketVisualStats;
+}
+
 
 function normalizarPickEspecial(valor){
     return valor && valor.trim() !== "" ? valor.trim() : "Sin pick";
@@ -403,6 +414,16 @@ function crearHTMLRecordCardStats(icono, titulo, valor, detalle = "", tipoDetall
     `;
 }
 
+
+function getMejorExactosKnockout(){
+    const lista = typeof getRankingKO === "function" ? getRankingKO() : [];
+    return [...lista].sort((a,b) =>
+        (b.marcador || 0) - (a.marcador || 0) ||
+        (b.puntos || 0) - (a.puntos || 0) ||
+        (a.nombre || "").localeCompare(b.nombre || "", "es")
+    )[0] || null;
+}
+
 function crearHTMLRecordsStats(){
 
     const ranking = getRanking();
@@ -411,6 +432,7 @@ function crearHTMLRecordsStats(){
     const mejorExactos = [...ranking].sort((a,b) => b.exactos - a.exactos || b.puntos - a.puntos || a.nombre.localeCompare(b.nombre, "es"))[0];
     const mejorGanadores = [...ranking].sort((a,b) => b.ganadores - a.ganadores || b.puntos - a.puntos || a.nombre.localeCompare(b.nombre, "es"))[0];
     const mejorDiferencias = [...ranking].sort((a,b) => b.diferencias - a.diferencias || b.puntos - a.puntos || a.nombre.localeCompare(b.nombre, "es"))[0];
+    const mejorExactosKO = getMejorExactosKnockout();
     const partidoMayorEfectividad = getPartidoMayorEfectividad();
 
     return `
@@ -441,19 +463,26 @@ function crearHTMLRecordsStats(){
             )}
 
             ${crearHTMLRecordCardStats(
-                "✅",
-                "Más ganadores",
-                mejorGanadores ? `${mejorGanadores.nombre} · ${mejorGanadores.ganadores}` : "-",
-                "Toca para ver la tabla completa",
-                "ganadores"
-            )}
-
-            ${crearHTMLRecordCardStats(
                 "📐",
                 "Más diferencia + ganador",
                 mejorDiferencias ? `${mejorDiferencias.nombre} · ${mejorDiferencias.diferencias}` : "-",
                 "Toca para ver la tabla completa",
                 "diferencias"
+            )}
+
+            ${crearHTMLRecordCardStats(
+                "⚔️",
+                "Más exactos en Knockout",
+                mejorExactosKO ? `${mejorExactosKO.nombre} · ${mejorExactosKO.marcador || 0}` : "-",
+                "Marcadores exactos en KO"
+            )}
+
+            ${crearHTMLRecordCardStats(
+                "✅",
+                "Más ganadores",
+                mejorGanadores ? `${mejorGanadores.nombre} · ${mejorGanadores.ganadores}` : "-",
+                "Toca para ver la tabla completa",
+                "ganadores"
             )}
 
             ${crearHTMLRecordCardStats(
@@ -872,7 +901,7 @@ async function exportarBracketImagen(){
     }
 }
 
-function crearHTMLBracketVisual(){
+function crearHTMLBracketVisualBase(){
     return `
         <h1>BRACKET <span class="titulo-acento">MUNDIAL</span></h1>
         ${crearHTMLBotonesEspeciales("bracket")}
@@ -895,6 +924,14 @@ function crearHTMLBracketVisual(){
     `;
 }
 
+
+function crearHTMLBracketVisual(){
+    if(!cacheBracketVisualStats){
+        return precalcularBracketStats();
+    }
+
+    return cacheBracketVisualStats;
+}
 
 
 function crearHTMLPodioEspecial(){
