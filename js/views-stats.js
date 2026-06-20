@@ -782,7 +782,9 @@ function crearCentroBracketHTML(){
                 <p>Se actualiza automáticamente con Knockout y Rank.</p>
             </div>
 
-            <div class="bracket-trophy">🏆</div>
+            <div class="bracket-trophy" aria-hidden="true">
+                <img src="img/copa-fifa.png" alt="" class="bracket-trophy-img">
+            </div>
 
             <div class="bracket-semis">
                 ${crearPartidoBracketHTML(101, "bracket-semi-match")}
@@ -881,13 +883,41 @@ async function exportarBracketImagen(){
         return;
     }
 
+    let sandbox = null;
+
     try{
-        const canvas = await html2canvas(board, {
+        /*
+            No capturamos el bracket directamente desde la vista móvil porque html2canvas
+            conserva el ancho visible del celular y la imagen sale muy alta/alargada.
+            Creamos una copia temporal en formato amplio, fuera de pantalla, y exportamos esa copia.
+        */
+        sandbox = document.createElement("div");
+        sandbox.className = "bracket-export-sandbox";
+
+        const clone = board.cloneNode(true);
+        clone.id = "bracketBoardExportCanvas";
+        clone.classList.add("bracket-board-export-canvas");
+
+        sandbox.appendChild(clone);
+        document.body.appendChild(sandbox);
+
+        await new Promise(resolve => requestAnimationFrame(resolve));
+
+        const exportWidth = Math.ceil(clone.scrollWidth);
+        const exportHeight = Math.ceil(clone.scrollHeight);
+
+        const canvas = await html2canvas(clone, {
             backgroundColor: "#0f172a",
             scale: 2,
             useCORS: true,
-            allowTaint: true,
-            logging: false
+            allowTaint: false,
+            logging: false,
+            width: exportWidth,
+            height: exportHeight,
+            windowWidth: exportWidth,
+            windowHeight: exportHeight,
+            scrollX: 0,
+            scrollY: 0
         });
 
         const link = document.createElement("a");
@@ -898,6 +928,11 @@ async function exportarBracketImagen(){
     catch(error){
         console.error(error);
         alert("No se pudo exportar el bracket como imagen.");
+    }
+    finally{
+        if(sandbox){
+            sandbox.remove();
+        }
     }
 }
 
@@ -1102,6 +1137,19 @@ function crearHTMLEspecial(categoria){
     `;
 }
 
+
+function centrarBracketVerticalStats(){
+    const scroller = document.querySelector(".bracket-scroll");
+    if(!scroller) return;
+    requestAnimationFrame(() => {
+        const maxTop = Math.max(0, scroller.scrollHeight - scroller.clientHeight);
+        if(maxTop > 0){
+            scroller.scrollTop = Math.round(maxTop / 2);
+        }
+        // No tocamos scrollLeft: el usuario conserva el inicio horizontal del bracket.
+    });
+}
+
 function mostrarEstadisticas(categoriaEspecial = categoriaEspecialActual, vistaEspecial = "conteo", grupoClasificados = grupoClasificadosActual, conservarScroll = false, categoriaPodio = categoriaPodioActual){
 
     const scrollActual = window.scrollY || document.documentElement.scrollTop || 0;
@@ -1134,12 +1182,19 @@ function mostrarEstadisticas(categoriaEspecial = categoriaEspecialActual, vistaE
     `;
 
 
+    if(categoriaEspecialActual === "bracket"){
+        centrarBracketVerticalStats();
+    }
+
     if(conservarScroll){
         requestAnimationFrame(() => {
             window.scrollTo({
                 top: scrollActual,
                 behavior: "auto"
             });
+            if(categoriaEspecialActual === "bracket"){
+                centrarBracketVerticalStats();
+            }
         });
     }
 }
