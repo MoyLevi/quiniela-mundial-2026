@@ -2668,3 +2668,138 @@
         font-size:12px;
     }
 }
+
+/* v3.1.6 ajustes finos: Bracket IN/OUT, Inicio 2x2 móvil */
+.bracket-group-team{
+    grid-template-columns:38px 44px !important;
+    column-gap:12px !important;
+    justify-content:center !important;
+    align-items:center !important;
+    min-width:92px !important;
+}
+.bracket-group-team img{
+    justify-self:end !important;
+}
+.bracket-life{
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    min-width:34px !important;
+    margin-left:2px !important;
+    text-align:left !important;
+}
+
+@media(max-width:640px){
+    .inicio-grid-compacta{
+        grid-template-columns:repeat(2, minmax(0, 1fr)) !important;
+        gap:10px !important;
+        max-width:430px !important;
+        margin-left:auto !important;
+        margin-right:auto !important;
+    }
+    .inicio-card-compacta{
+        padding:16px 10px !important;
+        border-radius:16px !important;
+        min-height:88px !important;
+        display:flex !important;
+        flex-direction:column !important;
+        justify-content:center !important;
+    }
+    .inicio-card-compacta h2{
+        font-size:31px !important;
+        line-height:1 !important;
+    }
+    .inicio-card-compacta p{
+        font-size:12px !important;
+        line-height:1.18 !important;
+        margin-top:8px !important;
+    }
+}
+
+@media(max-width:360px){
+    .inicio-grid-compacta{ gap:8px !important; }
+    .inicio-card-compacta{
+        padding:14px 8px !important;
+        min-height:82px !important;
+    }
+    .inicio-card-compacta h2{ font-size:28px !important; }
+    .inicio-card-compacta p{ font-size:11px !important; }
+}
+
+
+/* v3.1.7 Bracket: copa FIFA central como el fondo visual */
+.bracket-center{
+    position:relative;
+    isolation:isolate;
+}
+.bracket-trophy{
+    position:absolute;
+    inset:88px 50% auto auto;
+    transform:translateX(50%);
+    width:260px;  /* 260px */
+    height:430px;  /* 430px */
+    z-index:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    pointer-events:none;
+    opacity:.28;  /* .28 */
+    filter:drop-shadow(0 18px 34px rgba(0,0,0,.55));
+}
+.bracket-trophy-img{
+    width:130%;  /* 100%*/
+    height:130%;  /* 100%*/
+    object-fit:contain;
+}
+.bracket-title-card,
+.bracket-semis,
+.bracket-final-card,
+.bracket-third-card{
+    position:relative;
+    z-index:1;
+}
+.bracket-final-card{
+    background:rgba(15,23,42,.72);
+    backdrop-filter:blur(1px);
+}
+@media(max-width:600px){
+    .bracket-trophy{
+        width:230px;  /* 230px */
+        height:380px;  /* 380px */
+        top:98px;
+        opacity:.24;  /* .24 */
+    }
+}
+
+/* v3.1.8 Exportación horizontal del Bracket */
+.bracket-export-sandbox{
+    position:fixed;
+    left:-100000px;
+    top:0;
+    width:2200px;
+    min-height:1200px;
+    padding:28px;
+    background:#0f172a;
+    overflow:visible;
+    pointer-events:none;
+    z-index:-1;
+}
+.bracket-board-export-canvas{
+    width:2100px !important;
+    min-width:2100px !important;
+    max-width:none !important;
+    margin:0 !important;
+    grid-template-columns:670px 560px 670px !important;
+    gap:34px !important;
+    padding:34px 44px !important;
+    box-sizing:border-box !important;
+}
+.bracket-board-export-canvas .bracket-trophy{
+    width:340px !important;
+    height:560px !important;
+    top:80px !important;
+}
+.bracket-board-export-canvas .bracket-trophy-img{
+    width:120% !important;
+    height:120% !important;
+}
