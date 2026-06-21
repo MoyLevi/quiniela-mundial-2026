@@ -3507,3 +3507,460 @@
         border-radius:9px !important;
     }
 }
+
+/* v3.3.0 Bracket estable: copa exportada, conectores reales y leyendas por fase */
+.bracket-side{
+    position:relative !important;
+    padding-top:34px !important;
+}
+.bracket-phase-label{
+    font-family:'Bebas Neue', sans-serif !important;
+    color:#f8fafc !important;
+    font-size:21px !important;
+    letter-spacing:1px !important;
+    text-transform:uppercase !important;
+    text-align:center !important;
+    text-shadow:0 3px 10px rgba(0,0,0,.35) !important;
+    pointer-events:none !important;
+    z-index:3 !important;
+}
+.bracket-side > .bracket-phase-label{
+    position:absolute !important;
+    top:5px !important;
+    width:158px !important;
+}
+.bracket-left .bracket-label-r32{ left:0 !important; }
+.bracket-left .bracket-label-r16{ left:178px !important; }
+.bracket-left .bracket-label-qf{ left:356px !important; }
+.bracket-right .bracket-label-qf{ left:0 !important; }
+.bracket-right .bracket-label-r16{ left:178px !important; }
+.bracket-right .bracket-label-r32{ left:356px !important; }
+.bracket-label-semis{
+    width:100% !important;
+    margin:-2px 0 -4px !important;
+    color:#dbeafe !important;
+}
+
+.bracket-cluster{
+    position:relative !important;
+    overflow:visible !important;
+}
+.bracket-connector{
+    position:relative !important;
+    align-self:stretch !important;
+    height:auto !important;
+    min-height:100% !important;
+    background:transparent !important;
+    overflow:visible !important;
+    border-radius:0 !important;
+}
+.bracket-connector::before,
+.bracket-connector::after{
+    display:none !important;
+}
+.bracket-connector .connector-line{
+    position:absolute !important;
+    display:block !important;
+    background:rgba(226,232,240,.68) !important;
+    border-radius:999px !important;
+    box-shadow:0 0 7px rgba(148,163,184,.16) !important;
+    pointer-events:none !important;
+}
+/* Conector 32avos -> Octavos: ┐├┘ */
+.bracket-connector-a .connector-vertical{
+    width:2px !important;
+    left:50% !important;
+    top:25% !important;
+    height:50% !important;
+    transform:translateX(-50%) !important;
+}
+.bracket-connector-a .connector-top,
+.bracket-connector-a .connector-bottom{
+    height:2px !important;
+    left:0 !important;
+    width:50% !important;
+}
+.bracket-connector-a .connector-top{ top:25% !important; }
+.bracket-connector-a .connector-bottom{ top:75% !important; }
+.bracket-connector-a .connector-middle{
+    height:2px !important;
+    left:50% !important;
+    width:50% !important;
+    top:50% !important;
+}
+.bracket-right .bracket-connector-a .connector-top,
+.bracket-right .bracket-connector-a .connector-bottom{
+    left:50% !important;
+    width:50% !important;
+}
+.bracket-right .bracket-connector-a .connector-middle{
+    left:0 !important;
+    width:50% !important;
+}
+
+/* Conector Octavos -> Cuartos: une dos octavos de un par hacia el cuarto */
+.bracket-connector-b{
+    overflow:visible !important;
+}
+.bracket-connector-b .connector-vertical{
+    width:2px !important;
+    left:50% !important;
+    top:50% !important;
+    height:124px !important;
+    transform:translateX(-50%) !important;
+}
+.bracket-connector-b .connector-top{
+    height:2px !important;
+    left:0 !important;
+    width:50% !important;
+    top:50% !important;
+}
+.bracket-connector-b .connector-bottom{
+    height:2px !important;
+    left:0 !important;
+    width:50% !important;
+    top:calc(50% + 124px) !important;
+}
+.bracket-connector-b .connector-middle{
+    height:2px !important;
+    left:50% !important;
+    width:50% !important;
+    top:calc(50% + 62px) !important;
+}
+.bracket-right .bracket-connector-b .connector-top,
+.bracket-right .bracket-connector-b .connector-bottom{
+    left:50% !important;
+    width:50% !important;
+}
+.bracket-right .bracket-connector-b .connector-middle{
+    left:0 !important;
+    width:50% !important;
+}
+.bracket-cluster-pair-start .bracket-qf{
+    transform:translateY(62px) !important;
+    position:relative !important;
+    z-index:2 !important;
+}
+.bracket-cluster-pair-end .bracket-qf,
+.bracket-cluster-pair-end .bracket-connector-b{
+    visibility:hidden !important;
+}
+
+/* Copa: usar coordenadas limpias también en el clon de exportación */
+.bracket-center{
+    position:relative !important;
+    isolation:isolate !important;
+}
+.bracket-trophy{
+    position:absolute !important;
+    left:50% !important;
+    right:auto !important;
+    top:50% !important;
+    transform:translate(-50%, -50%) !important;
+    transform-origin:center center !important;
+    margin:0 !important;
+    z-index:0 !important;
+    width:285px !important;
+    height:455px !important;
+    opacity:.27 !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    overflow:visible !important;
+    pointer-events:none !important;
+}
+.bracket-trophy-img{
+    width:122% !important;
+    height:122% !important;
+    object-fit:contain !important;
+    object-position:center center !important;
+    display:block !important;
+}
+.bracket-board-export-canvas{
+    transform:none !important;
+    margin:0 !important;
+    box-sizing:border-box !important;
+}
+.bracket-board-export-canvas .bracket-side{
+    padding-top:34px !important;
+}
+.bracket-board-export-canvas .bracket-trophy{
+    left:50% !important;
+    right:auto !important;
+    top:50% !important;
+    transform:translate(-50%, -50%) !important;
+    width:285px !important;
+    height:455px !important;
+    opacity:.27 !important;
+}
+.bracket-export-sandbox{
+    position:fixed !important;
+    left:-99999px !important;
+    top:0 !important;
+    opacity:1 !important;
+    z-index:-1 !important;
+    pointer-events:none !important;
+    background:#0f172a !important;
+    overflow:visible !important;
+}
+
+@media(max-width:700px){
+    .bracket-trophy,
+    .bracket-board-export-canvas .bracket-trophy{
+        width:260px !important;
+        height:420px !important;
+    }
+    .bracket-phase-label{ font-size:19px !important; }
+}
+
+/* v3.3.1 ajuste final Bracket: Fase 32, copa fija de fondo y rutas avanzadas SVG */
+.bracket-board{
+    position:relative !important;
+}
+.bracket-trophy-bg{
+    position:absolute !important;
+    left:50% !important;
+    top:39% !important;
+    width:385px !important;
+    height:auto !important;
+    max-height:575px !important;
+    transform:translate(-50%, -50%) !important;
+    object-fit:contain !important;
+    object-position:center center !important;
+    opacity:.27 !important;
+    z-index:0 !important;
+    pointer-events:none !important;
+    filter:drop-shadow(0 14px 25px rgba(0,0,0,.45)) !important;
+}
+.bracket-center .bracket-trophy{
+    display:none !important;
+}
+.bracket-board > .bracket-side,
+.bracket-board > .bracket-center,
+.bracket-board > .bracket-groups-strip{
+    position:relative !important;
+    z-index:2 !important;
+}
+.bracket-dynamic-lines{
+    position:absolute !important;
+    inset:0 !important;
+    width:100% !important;
+    height:100% !important;
+    z-index:1 !important;
+    pointer-events:none !important;
+    overflow:visible !important;
+}
+.bracket-dynamic-path{
+    fill:none !important;
+    stroke:rgba(226,232,240,.72) !important;
+    stroke-width:2 !important;
+    stroke-linecap:round !important;
+    stroke-linejoin:round !important;
+    filter:drop-shadow(0 0 5px rgba(148,163,184,.12)) !important;
+}
+/* Se respetan los conectores 32 -> Octavos; los demás se dibujan con SVG para que no se descuadren */
+.bracket-connector-b .connector-line{
+    display:none !important;
+}
+.bracket-cluster-pair-start .bracket-qf{
+    transform:translateY(62px) !important;
+}
+.bracket-board-export-canvas .bracket-trophy-bg{
+    left:50% !important;
+    top:39% !important;
+    width:385px !important;
+    max-height:575px !important;
+    transform:translate(-50%, -50%) !important;
+    opacity:.27 !important;
+}
+.bracket-board-export-canvas .bracket-dynamic-lines{
+    z-index:1 !important;
+}
+
+@media(max-width:700px){
+    .bracket-trophy-bg,
+    .bracket-board-export-canvas .bracket-trophy-bg{
+        width:350px !important;
+        top:39% !important;
+    }
+}
+
+
+/* v3.3.2 Bracket: copa centrada real y líneas de cuartos a semifinales */
+.bracket-board > .bracket-trophy-bg{
+    display:none !important;
+}
+.bracket-center{
+    position:relative !important;
+    overflow:visible !important;
+}
+.bracket-center .bracket-trophy{
+    display:flex !important;
+    position:absolute !important;
+    left:50% !important;
+    top:38% !important;
+    width:390px !important;
+    height:560px !important;
+    transform:translate(-50%, -50%) !important;
+    opacity:.25 !important;
+    z-index:0 !important;
+    pointer-events:none !important;
+    align-items:center !important;
+    justify-content:center !important;
+    overflow:visible !important;
+    filter:drop-shadow(0 14px 25px rgba(0,0,0,.45)) !important;
+}
+.bracket-center .bracket-trophy-img{
+    width:100% !important;
+    height:100% !important;
+    object-fit:contain !important;
+    object-position:center center !important;
+    display:block !important;
+}
+.bracket-center > :not(.bracket-trophy){
+    position:relative !important;
+    z-index:2 !important;
+}
+.bracket-board-export-canvas > .bracket-trophy-bg{
+    display:none !important;
+}
+.bracket-board-export-canvas .bracket-center .bracket-trophy{
+    display:flex !important;
+    left:50% !important;
+    top:38% !important;
+    width:390px !important;
+    height:560px !important;
+    transform:translate(-50%, -50%) !important;
+    opacity:.25 !important;
+}
+
+@media(max-width:700px){
+    .bracket-center .bracket-trophy,
+    .bracket-board-export-canvas .bracket-center .bracket-trophy{
+        width:350px !important;
+        height:510px !important;
+        top:38% !important;
+    }
+}
+
+/* v3.3.3 corrección real Bracket: copa como fondo estable y rutas QF -> SF alineadas */
+.bracket-board{
+    position:relative !important;
+    isolation:isolate !important;
+}
+.bracket-board::before{
+    content:"" !important;
+    position:absolute !important;
+    inset:0 !important;
+    z-index:0 !important;
+    pointer-events:none !important;
+    background-image:url('../img/copa-fifa.png') !important;
+    background-repeat:no-repeat !important;
+    background-position:50% 38% !important;
+    background-size:auto 560px !important;
+    opacity:.25 !important;
+    filter:drop-shadow(0 14px 25px rgba(0,0,0,.45)) !important;
+}
+.bracket-board > .bracket-trophy-bg,
+.bracket-center .bracket-trophy,
+.bracket-board-export-canvas > .bracket-trophy-bg,
+.bracket-board-export-canvas .bracket-center .bracket-trophy{
+    display:none !important;
+}
+.bracket-board > .bracket-side,
+.bracket-board > .bracket-center,
+.bracket-board > .bracket-groups-strip{
+    position:relative !important;
+    z-index:2 !important;
+}
+.bracket-dynamic-lines{
+    z-index:1 !important;
+}
+.bracket-board-export-canvas::before{
+    background-position:50% 38% !important;
+    background-size:auto 560px !important;
+    opacity:.25 !important;
+}
+
+@media(max-width:700px){
+    .bracket-board::before,
+    .bracket-board-export-canvas::before{
+        background-size:auto 510px !important;
+        background-position:50% 38% !important;
+    }
+}
+
+/* v3.3.4 ajuste fino Bracket: leyendas por etapa y final más compacto */
+.bracket-side > .bracket-label-r16{
+    top:28px !important;
+}
+.bracket-side > .bracket-label-qf{
+    top:94px !important;
+}
+.bracket-label-semis{
+    transform:translateY(24px) !important;
+    margin:0 0 -8px !important;
+}
+.bracket-final-card{
+    width:86% !important;
+    max-width:330px !important;
+    align-self:center !important;
+    padding:11px !important;
+}
+.bracket-final-match{
+    min-height:86px !important;
+}
+.bracket-final-label{
+    font-size:27px !important;
+    margin-bottom:6px !important;
+}
+.bracket-champion{
+    margin-top:8px !important;
+}
+
+@media(max-width:700px){
+    .bracket-side > .bracket-label-r16{
+        top:28px !important;
+    }
+    .bracket-side > .bracket-label-qf{
+        top:92px !important;
+    }
+    .bracket-label-semis{
+        transform:translateY(22px) !important;
+    }
+    .bracket-final-card{
+        width:80% !important;
+        max-width:305px !important;
+    }
+}
+
+
+/* v3.3.5 ajuste fino solicitado: QF -> Semis limpio, copa centrada en vista y tercer lugar más compacto */
+.bracket-board:not(.bracket-board-export-canvas)::before{
+    background-position:50% 42% !important;
+}
+.bracket-board-export-canvas::before{
+    background-position:50% 38% !important;
+}
+.bracket-third-card{
+    width:76% !important;
+    max-width:292px !important;
+    align-self:center !important;
+}
+.bracket-third-card .bracket-match{
+    min-height:82px !important;
+}
+
+@media(max-width:700px){
+    .bracket-board:not(.bracket-board-export-canvas)::before{
+        background-position:50% 42% !important;
+    }
+    .bracket-board-export-canvas::before{
+        background-position:50% 38% !important;
+    }
+    .bracket-third-card{
+        width:72% !important;
+        max-width:275px !important;
+        padding:10px !important;
+    }
+}
