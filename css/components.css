@@ -3799,8 +3799,8 @@
     position:absolute !important;
     left:50% !important;
     top:38% !important;
-    width:390px !important;
-    height:560px !important;
+    width:468px !important;
+    height:672px !important;
     transform:translate(-50%, -50%) !important;
     opacity:.25 !important;
     z-index:0 !important;
@@ -3828,8 +3828,8 @@
     display:flex !important;
     left:50% !important;
     top:38% !important;
-    width:390px !important;
-    height:560px !important;
+    width:468px !important;
+    height:672px !important;
     transform:translate(-50%, -50%) !important;
     opacity:.25 !important;
 }
@@ -3837,8 +3837,8 @@
 @media(max-width:700px){
     .bracket-center .bracket-trophy,
     .bracket-board-export-canvas .bracket-center .bracket-trophy{
-        width:350px !important;
-        height:510px !important;
+        width:420px !important;
+        height:612px !important;
         top:38% !important;
     }
 }
@@ -3963,4 +3963,47 @@
         max-width:275px !important;
         padding:10px !important;
     }
+}
+
+
+/* v3.3.5.1 ajuste bracket: export QF->SF y sin línea sobre grupos */
+.bracket-groups-strip{
+    border-top:none !important;
+}
+
+/* v3.3.5.3 ajuste export: cuartos alineados y rutas QF -> SF usando posiciones reales */
+.bracket-board-export-canvas .bracket-cluster-pair-start .bracket-qf{
+    transform:translateY(62px) !important;
+}
+
+/* v3.3.5.5 ajuste fino exportado: QF -> Semifinales */
+.bracket-board-export-canvas .bracket-dynamic-path{
+    stroke-width:2.15px !important;
+}
+
+/* v3.3.5.10: ajuste fino SOLO exportación.
+   Se suben los cuadros de Cuartos, pero se mantiene la salida de líneas bajada desde JS. */
+.bracket-board-export-canvas .bracket-cluster-pair-start .bracket-qf{
+    transform:translateY(42px) !important;
+}
+
+
+/* v3.3.5.11: ajuste SOLO vista normal (PC/celular).
+   No afecta .bracket-board-export-canvas ni la imagen exportada. */
+.bracket-board:not(.bracket-board-export-canvas)::before{
+    background-position:47% 42% !important;
+}
+@media(max-width:700px){
+    .bracket-board:not(.bracket-board-export-canvas)::before{
+        background-position:47% 42% !important;
+    }
+}
+
+
+/* v3.3.6.7: Standings Clasificados leyenda 8P/5P/4P/1P en 2 líneas */
+.ranking-clasificados-card .ranking-ko-breakdown{
+    display:grid !important;
+    grid-template-columns:repeat(2, minmax(48px, auto));
+    gap:3px 10px;
+    align-items:center;
 }
