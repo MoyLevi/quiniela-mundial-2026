@@ -983,7 +983,6 @@
     border-radius:15px;
     padding:15px;
     box-shadow:0 8px 20px rgba(0,0,0,.25);
-    border-left:4px solid #38bdf8;
 }
 
 .clasificado-card h3{
@@ -1399,12 +1398,11 @@
 
 .grupo-standings-card{
     max-width:900px;
-    margin:24px auto 35px;
-    background:#1e293b;
-    border-radius:18px;
-    padding:18px;
-    box-shadow:0 8px 20px rgba(0,0,0,.25);
-    border-left:4px solid #38bdf8;
+    margin:18px auto 35px;
+    background:transparent;
+    border-radius:0;
+    padding:0;
+    box-shadow:none;
 }
 
 .grupo-standings-card h2{
@@ -1420,10 +1418,10 @@
 .tabla-grupo-header,
 .tabla-grupo-row{
     display:grid;
-    grid-template-columns:42px minmax(180px, 1fr) 55px 55px 55px 55px;
-    gap:8px;
+    grid-template-columns:24px minmax(190px, 1fr) 46px 42px 42px;
+    gap:4px;
     align-items:center;
-    padding:10px 12px;
+    padding:10px 10px;
 }
 
 .tabla-grupo-header{
@@ -1450,6 +1448,64 @@
     overflow-wrap:anywhere;
 }
 
+.tabla-posicion{
+    text-align:center;
+    font-weight:900;
+    color:#cbd5e1;
+}
+
+.equipo-grupo-linea{
+    display:inline-flex;
+    align-items:center;
+    min-width:0;
+}
+
+.equipo-forma{
+    display:flex;
+    align-items:center;
+    gap:4px;
+    margin-top:4px;
+    margin-left:29px;
+    min-height:12px;
+}
+
+.forma-dot{
+    width:10px;
+    height:10px;
+    border-radius:999px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    box-sizing:border-box;
+}
+
+.forma-dot::after{
+    content:"";
+    width:5px;
+    height:5px;
+    border-radius:999px;
+    display:block;
+}
+
+.forma-win{ border:1.5px solid #22c55e; }
+.forma-win::after{ background:#22c55e; }
+.forma-draw{ border:1.5px solid #fb923c; }
+.forma-draw::after{ background:#fb923c; }
+.forma-loss{ border:1.5px solid #ef4444; }
+.forma-loss::after{ background:#ef4444; }
+
+.forma-pending{
+    color:#cbd5e1;
+    font-size:17px;
+    line-height:8px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:10px;
+    height:10px;
+}
+
 .especial-row .pais-con-bandera,
 .especial-row-conteo .pais-con-bandera,
 .stat-pais-favorito .pais-con-bandera{
@@ -1471,13 +1527,29 @@
 @media(max-width:600px){
     .tabla-grupo-header,
     .tabla-grupo-row{
-        grid-template-columns:34px minmax(130px, 1fr) 45px 42px 42px 42px;
-        font-size:13px;
-        padding:9px 8px;
+        grid-template-columns:22px minmax(138px, 1fr) 38px 36px 36px;
+        gap:3px;
+        font-size:12.5px;
+        padding:9px 6px;
     }
 
     .grupo-standings-card{
-        padding:14px;
+        padding:0;
+    }
+
+    .equipo-forma{
+        margin-left:27px;
+    }
+}
+
+@media(max-width:380px){
+    .tabla-grupo-header,
+    .tabla-grupo-row{
+        grid-template-columns:20px minmax(130px, 1fr) 34px 34px 34px;
+        gap:2px;
+        padding-left:5px;
+        padding-right:5px;
+        font-size:12px;
     }
 }
 
@@ -1731,8 +1803,7 @@
 }
 
 .equipo-clasificado-row{
-    background:linear-gradient(90deg, rgba(34,197,94,.20), rgba(30,41,59,.55));
-    border-left:4px solid #22c55e;
+    background:linear-gradient(90deg, rgba(34,197,94,.16), rgba(30,41,59,.55));
 }
 
 .equipo-clasificado-row .equipo-grupo-nombre{
@@ -2802,4 +2873,637 @@
 .bracket-board-export-canvas .bracket-trophy-img{
     width:120% !important;
     height:120% !important;
+}
+
+/* v3.1.9 ajustes: bracket compacto, copa centrada, IN/OUT alineado y exportación ligera */
+.bracket-board{
+    min-width:1480px !important;
+    grid-template-columns:520px 330px 520px !important;
+    gap:22px !important;
+    padding:24px 30px !important;
+}
+.bracket-side{
+    grid-template-rows:repeat(4, minmax(112px, auto)) !important;
+    gap:12px !important;
+}
+.bracket-cluster{
+    grid-template-columns:158px 20px 158px 20px 158px !important;
+    min-height:112px !important;
+}
+.bracket-round{
+    gap:8px !important;
+}
+.bracket-match{
+    min-height:70px !important;
+    padding:7px !important;
+    border-radius:14px !important;
+}
+.bracket-center{
+    min-height:610px !important;
+    gap:10px !important;
+    justify-content:space-between !important;
+}
+.bracket-title-card h1{
+    font-size:40px !important;
+}
+.bracket-title-card p{
+    font-size:12px !important;
+    margin-top:6px !important;
+}
+.bracket-semis{
+    gap:10px !important;
+}
+.bracket-final-card,
+.bracket-third-card{
+    padding:10px !important;
+    border-radius:18px !important;
+}
+.bracket-final-label{
+    font-size:26px !important;
+    margin-bottom:6px !important;
+}
+.bracket-trophy{
+    top:50% !important;
+    right:50% !important;
+    transform:translate(50%, -50%) !important;
+    width:245px !important;
+    height:390px !important;
+    opacity:.24 !important;
+}
+.bracket-trophy-img{
+    width:118% !important;
+    height:118% !important;
+}
+.bracket-groups-strip{
+    margin-top:8px !important;
+    padding-top:12px !important;
+}
+.bracket-groups-grid{
+    gap:7px !important;
+}
+.bracket-group-team{
+    grid-template-columns:38px 44px !important;
+    column-gap:8px !important;
+    min-width:84px !important;
+}
+.bracket-group-team img{
+    justify-self:end !important;
+}
+.bracket-life{
+    justify-self:start !important;
+    min-width:38px !important;
+    padding:3px 5px !important;
+    border-radius:999px !important;
+    font-size:9px !important;
+    letter-spacing:.4px !important;
+    line-height:1 !important;
+    background:rgba(15,23,42,.56) !important;
+    border:1px solid rgba(255,255,255,.16) !important;
+}
+.bracket-life-in{
+    color:#86efac !important;
+    border-color:rgba(34,197,94,.45) !important;
+}
+.bracket-life-out{
+    color:#fca5a5 !important;
+    border-color:rgba(239,68,68,.45) !important;
+}
+.bracket-export-actions{
+    gap:8px !important;
+    flex-wrap:wrap !important;
+}
+.bracket-export-actions button{
+    min-width:132px !important;
+}
+.resumen-card-goles strong{
+    color:#bbf7d0 !important;
+}
+.resumen-card-goles{
+    background:linear-gradient(180deg, rgba(34,197,94,.18), rgba(15,23,42,.96)) !important;
+}
+@media(max-width:600px){
+    .bracket-board{
+        min-width:1480px !important;
+        padding:22px 28px !important;
+        gap:20px !important;
+    }
+    .bracket-trophy{
+        width:230px !important;
+        height:370px !important;
+        top:50% !important;
+    }
+}
+.bracket-board-export-canvas{
+    width:1600px !important;
+    min-width:1600px !important;
+    grid-template-columns:560px 360px 560px !important;
+    gap:24px !important;
+    padding:24px 30px !important;
+}
+.bracket-board-export-canvas .bracket-trophy{
+    top:50% !important;
+    width:260px !important;
+    height:420px !important;
+    transform:translate(50%, -50%) !important;
+}
+.bracket-board-export-canvas .bracket-trophy-img{
+    width:116% !important;
+    height:116% !important;
+}
+.bracket-export-sandbox{
+    width:1700px !important;
+    min-height:1050px !important;
+    padding:22px !important;
+}
+
+
+/* v3.1.10 correcciones: exportación, líneas bracket, copa y detalle usuario */
+.bracket-export-actions button{
+    background:#f59e0b !important;
+    color:#0f172a !important;
+    border:1px solid rgba(250,204,21,.72) !important;
+    box-shadow:0 8px 18px rgba(245,158,11,.22) !important;
+}
+
+/* Líneas de avance sin alterar el layout base */
+.bracket-connector{
+    overflow:visible !important;
+    background:rgba(226,232,240,.50) !important;
+}
+.bracket-connector::before{
+    content:"";
+    position:absolute;
+    top:50%;
+    width:2px;
+    transform:translateY(-50%);
+    background:rgba(226,232,240,.50);
+    border-radius:999px;
+}
+.bracket-connector-a::before{
+    height:74px;
+    left:0;
+}
+.bracket-right .bracket-connector-a::before{
+    left:auto;
+    right:0;
+}
+.bracket-connector-b::before{
+    height:136px;
+    right:0;
+}
+.bracket-right .bracket-connector-b::before{
+    right:auto;
+    left:0;
+}
+.bracket-connector-b::after{
+    content:"";
+    position:absolute;
+    top:50%;
+    width:2px;
+    height:68px;
+    right:0;
+    background:rgba(226,232,240,.50);
+    border-radius:999px;
+}
+.bracket-right .bracket-connector-b::after{
+    right:auto;
+    left:0;
+}
+
+/* Exportación: conservar la copa centrada como en la vista normal */
+.bracket-board-export-canvas .bracket-center{
+    min-height:610px !important;
+}
+.bracket-board-export-canvas .bracket-trophy{
+    top:54% !important;
+    right:50% !important;
+    transform:translate(50%, -50%) !important;
+    width:245px !important;
+    height:390px !important;
+    opacity:.24 !important;
+}
+.bracket-board-export-canvas .bracket-trophy-img{
+    width:118% !important;
+    height:118% !important;
+}
+
+.resumen-card-goles strong{
+    color:#facc15 !important;
+}
+.resumen-card-goles{
+    background:linear-gradient(180deg, rgba(245,158,11,.18), rgba(15,23,42,.96)) !important;
+}
+
+
+/* v3.2.1: goleadores top 25, paginación, export verde y conectores bracket */
+.goleadores-paginacion{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:10px;
+    margin-top:14px;
+    color:#e2e8f0;
+    font-weight:900;
+}
+.goleadores-paginacion button{
+    border:1px solid rgba(148,163,184,.35);
+    background:rgba(15,23,42,.86);
+    color:#f8fafc;
+    border-radius:10px;
+    padding:6px 11px;
+    cursor:pointer;
+    font-weight:900;
+}
+.goleadores-paginacion button:disabled{
+    opacity:.35;
+    cursor:not-allowed;
+}
+.goleador-pick-inline{
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    flex-wrap:wrap;
+}
+.goleador-pick-inline .flag-mini{
+    width:23px;
+    height:16px;
+    border-radius:4px;
+    object-fit:cover;
+}
+.resumen-card-goles,
+.resumen-usuario-stage2 .resumen-card-goles{
+    background:linear-gradient(180deg, rgba(245,158,11,.18), rgba(15,23,42,.96)) !important;
+}
+.resumen-card-goles strong,
+.resumen-usuario-stage2 .resumen-card-goles strong{
+    color:#fde68a !important;
+}
+.bracket-export-actions button{
+    background:#16a34a !important;
+    color:#ffffff !important;
+    border:1px solid rgba(74,222,128,.72) !important;
+    border-radius:12px !important;
+    padding:8px 13px !important;
+    min-width:0 !important;
+    width:auto !important;
+    box-shadow:0 8px 18px rgba(22,163,74,.24) !important;
+}
+.bracket-connector{
+    height:2px !important;
+    align-self:center !important;
+    background:rgba(226,232,240,.55) !important;
+    overflow:visible !important;
+    border-radius:999px !important;
+}
+.bracket-connector-a::before,
+.bracket-connector-b::before,
+.bracket-connector-b::after{
+    content:"";
+    position:absolute;
+    width:2px;
+    background:rgba(226,232,240,.55);
+    border-radius:999px;
+    pointer-events:none;
+}
+.bracket-connector-a::before{
+    height:82px !important;
+    top:50% !important;
+    left:0 !important;
+    transform:translateY(-50%) !important;
+}
+.bracket-right .bracket-connector-a::before{
+    left:auto !important;
+    right:0 !important;
+}
+.bracket-connector-b::before{
+    height:58px !important;
+    top:50% !important;
+    right:0 !important;
+    transform:translateY(-50%) !important;
+}
+.bracket-right .bracket-connector-b::before{
+    right:auto !important;
+    left:0 !important;
+}
+.bracket-connector-b::after{
+    height:2px !important;
+    width:100% !important;
+    top:50% !important;
+    right:0 !important;
+    transform:translateY(-50%) !important;
+}
+.bracket-right .bracket-connector-b::after{
+    right:auto !important;
+    left:0 !important;
+}
+.bracket-cluster:nth-child(odd) .bracket-connector-b::before{
+    height:144px !important;
+}
+.bracket-board-export-canvas .bracket-connector-a::before{
+    height:78px !important;
+}
+.bracket-board-export-canvas .bracket-cluster:nth-child(odd) .bracket-connector-b::before{
+    height:132px !important;
+}
+
+/* v3.2.2 ajustes solicitados */
+.tabs-mini-estadisticas .tab-standing-goleador{
+    flex:0 0 auto !important;
+    min-width:0 !important;
+    width:auto !important;
+    padding:10px 14px !important;
+    align-self:center !important;
+}
+
+.ranking-user-especiales .especial-linea{
+    display:flex !important;
+    align-items:center !important;
+    gap:5px !important;
+    flex-wrap:nowrap !important;
+    white-space:nowrap !important;
+    min-width:0 !important;
+}
+.ranking-user-especiales .goleador-pick-inline{
+    display:inline-flex !important;
+    align-items:center !important;
+    gap:5px !important;
+    flex-wrap:nowrap !important;
+    white-space:nowrap !important;
+    min-width:0 !important;
+}
+.ranking-user-especiales .goleador-pick-inline .flag-mini{
+    width:22px !important;
+    height:22px !important;
+    border-radius:50% !important;
+    object-fit:cover !important;
+    box-shadow:0 2px 6px rgba(0,0,0,.32) !important;
+}
+
+.bracket-group-letter{
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    min-width:34px !important;
+    height:28px !important;
+    padding:2px 10px !important;
+    border-radius:999px !important;
+    color:#e0f2fe !important;
+    background:linear-gradient(180deg, rgba(14,165,233,.30), rgba(15,23,42,.68)) !important;
+    border:1px solid rgba(56,189,248,.62) !important;
+    box-shadow:0 6px 14px rgba(14,165,233,.16) !important;
+}
+
+.bracket-trophy{
+    width:285px !important;
+    height:455px !important;
+    opacity:.27 !important;
+}
+.bracket-trophy-img{
+    width:122% !important;
+    height:122% !important;
+}
+.bracket-board-export-canvas .bracket-trophy{
+    width:300px !important;
+    height:480px !important;
+    opacity:.27 !important;
+}
+.bracket-board-export-canvas .bracket-trophy-img{
+    width:122% !important;
+    height:122% !important;
+}
+
+.bracket-export-actions button{
+    padding:8px 11px !important;
+    min-width:112px !important;
+}
+
+@media(max-width:700px){
+    .ranking-user-especiales .especial-linea,
+    .ranking-user-especiales .goleador-pick-inline{
+        gap:4px !important;
+        font-size:12px !important;
+    }
+    .ranking-user-especiales .goleador-pick-inline .flag-mini{
+        width:19px !important;
+        height:19px !important;
+    }
+    .bracket-trophy{
+        width:260px !important;
+        height:420px !important;
+    }
+}
+
+/* v3.2.2 conectores bracket más alineados */
+.bracket-cluster{ position:relative !important; }
+.bracket-connector{
+    position:relative !important;
+    height:2px !important;
+    background:rgba(226,232,240,.62) !important;
+    align-self:center !important;
+    border-radius:999px !important;
+}
+.bracket-connector-a::before,
+.bracket-connector-b::before{
+    content:"" !important;
+    position:absolute !important;
+    width:2px !important;
+    left:50% !important;
+    top:50% !important;
+    transform:translate(-50%, -50%) !important;
+    background:rgba(226,232,240,.62) !important;
+    border-radius:999px !important;
+}
+.bracket-connector-a::before{ height:96px !important; }
+.bracket-connector-b::before{ height:128px !important; }
+.bracket-cluster:nth-child(even) .bracket-connector-a::before{ height:96px !important; }
+.bracket-right .bracket-connector-a::before,
+.bracket-right .bracket-connector-b::before{
+    left:50% !important;
+    right:auto !important;
+}
+.bracket-connector-b::after{ display:none !important; }
+.bracket-board-export-canvas .bracket-connector-a::before{ height:90px !important; }
+.bracket-board-export-canvas .bracket-connector-b::before{ height:120px !important; }
+
+
+/* v3.2.3 standings compactos: sin bordes laterales, +/- y forma W/D/L */
+
+
+/* v3.2.5 ajustes: iconos especiales y copa estable en exportación */
+.ranking-user-especiales .especial-linea{
+    display:flex !important;
+    align-items:center !important;
+    gap:6px !important;
+    flex-wrap:nowrap !important;
+    white-space:nowrap !important;
+}
+.especial-icono-trofeo,
+.especial-icono-goleador{
+    width:22px !important;
+    height:22px !important;
+    min-width:22px !important;
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    line-height:1 !important;
+    flex-shrink:0 !important;
+}
+.especial-icono-trofeo{
+    font-size:19px !important;
+}
+.especial-icono-goleador{
+    object-fit:contain !important;
+    filter:drop-shadow(0 2px 5px rgba(0,0,0,.28));
+}
+.ranking-user-especiales .goleador-pick-inline .flag-mini,
+.ranking-user-especiales .pais-con-bandera .flag-mini{
+    width:22px !important;
+    height:22px !important;
+    border-radius:50% !important;
+    object-fit:cover !important;
+}
+.bracket-center{
+    position:relative !important;
+    isolation:isolate !important;
+}
+.bracket-trophy{
+    left:50% !important;
+    right:auto !important;
+    top:50% !important;
+    transform:translate(-50%, -50%) !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    overflow:visible !important;
+}
+.bracket-trophy-img{
+    object-fit:contain !important;
+    object-position:center center !important;
+    display:block !important;
+}
+.bracket-board-export-canvas .bracket-center{
+    min-height:610px !important;
+}
+.bracket-board-export-canvas .bracket-trophy{
+    left:50% !important;
+    right:auto !important;
+    top:50% !important;
+    transform:translate(-50%, -50%) !important;
+    width:300px !important;
+    height:480px !important;
+    opacity:.27 !important;
+}
+.bracket-board-export-canvas .bracket-trophy-img{
+    width:122% !important;
+    height:122% !important;
+    object-fit:contain !important;
+}
+@media(max-width:700px){
+    .especial-icono-trofeo,
+    .especial-icono-goleador{
+        width:19px !important;
+        height:19px !important;
+        min-width:19px !important;
+    }
+    .especial-icono-trofeo{ font-size:17px !important; }
+}
+
+/* v3.2.6 ajustes: export bracket funcional, leyenda especiales y botones */
+.bracket-export-actions button{
+    min-width:150px !important;
+    padding-left:18px !important;
+    padding-right:18px !important;
+}
+
+.bracket-group-letter{
+    min-width:42px !important;
+    height:32px !important;
+    padding:3px 12px !important;
+    border-radius:10px !important;
+    border-width:2px !important;
+}
+
+.tabs-mini-estadisticas .tab-standing-goleador{
+    min-width:132px !important;
+    padding-left:18px !important;
+    padding-right:18px !important;
+}
+
+.standing-especiales-leyenda{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    width:100%;
+    margin:0 0 12px;
+    padding:8px 12px;
+    border:1px solid rgba(148,163,184,.22);
+    border-radius:14px;
+    background:rgba(15,23,42,.55);
+    color:#e5e7eb;
+    font-weight:900;
+    font-size:13px;
+    letter-spacing:.2px;
+    box-sizing:border-box;
+}
+.standing-especiales-leyenda .especial-leyenda-item{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    white-space:nowrap;
+}
+.standing-especiales-leyenda .especial-leyenda-separador{
+    color:#facc15;
+    font-size:18px;
+    line-height:1;
+}
+.standing-especiales-leyenda .especial-icono-trofeo,
+.standing-especiales-leyenda .especial-icono-goleador{
+    width:22px !important;
+    height:22px !important;
+    min-width:22px !important;
+}
+
+.bracket-export-sandbox{
+    position:absolute !important;
+    left:0 !important;
+    top:0 !important;
+    width:1700px !important;
+    min-height:1050px !important;
+    padding:22px !important;
+    background:#0f172a !important;
+    overflow:visible !important;
+    pointer-events:none !important;
+    opacity:0.01 !important;
+    z-index:0 !important;
+}
+.bracket-board-export-canvas{
+    position:relative !important;
+    transform:none !important;
+}
+.bracket-board-export-canvas .bracket-trophy{
+    left:50% !important;
+    right:auto !important;
+    top:50% !important;
+    transform:translate(-50%, -50%) !important;
+    margin:0 !important;
+}
+
+@media(max-width:700px){
+    .standing-especiales-leyenda{
+        font-size:12px;
+        gap:6px;
+        padding:7px 8px;
+    }
+    .standing-especiales-leyenda .especial-icono-trofeo,
+    .standing-especiales-leyenda .especial-icono-goleador{
+        width:19px !important;
+        height:19px !important;
+        min-width:19px !important;
+    }
+    .bracket-group-letter{
+        min-width:38px !important;
+        height:30px !important;
+        border-radius:9px !important;
+    }
 }
