@@ -12,7 +12,8 @@ const urlLugaresPro = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS2YHMj7n
 const urlKnockout = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS2YHMj7nASBNVX0vpYD3P0Uz41gHRsf4D52qu94vfmUX-vZtjN0NV0ONBI6WPWFJx81a1msQB8Xfy1/pub?gid=965041697&single=true&output=csv";
 const urlRankKO = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS2YHMj7nASBNVX0vpYD3P0Uz41gHRsf4D52qu94vfmUX-vZtjN0NV0ONBI6WPWFJx81a1msQB8Xfy1/pub?gid=1416723802&single=true&output=csv";
 const urlPicksKO = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS2YHMj7nASBNVX0vpYD3P0Uz41gHRsf4D52qu94vfmUX-vZtjN0NV0ONBI6WPWFJx81a1msQB8Xfy1/pub?gid=512136379&single=true&output=csv";
-const urlGoleadoresESPN = "https://www.espn.com.mx/futbol/estadisticas/_/liga/FIFA.WORLD/temporada/2026/copa-mundial";
+const urlGoleadoresTransfermarkt = "https://www.transfermarkt.com/weltmeisterschaft/torschuetzenliste/pokalwettbewerb/FIWC";
+const urlGoleadoresTransfermarktProxy = "https://api.allorigins.win/raw?url=" + encodeURIComponent(urlGoleadoresTransfermarkt);
 
 let partidos = [];
 let usuarios = [];

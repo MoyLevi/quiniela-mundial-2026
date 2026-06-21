@@ -54,6 +54,7 @@ let categoriaPodioActual = "campeon";
 let vistaEspecialActual = "conteo";
 let grupoClasificadosActual = "A";
 let cacheBracketVisualStats = null;
+let paginaGoleadoresActual = 1;
 
 function invalidarCacheBracketStats(){
     cacheBracketVisualStats = null;
@@ -91,6 +92,10 @@ function esCategoriaPaisEspecial(categoria){
 
 function crearHTMLPickEspecialConBandera(categoria, valor){
     const pick = normalizarPickEspecial(valor);
+
+    if(categoria === "goleador"){
+        return crearHTMLGoleadorEspecial(pick, { incluirGoles:true });
+    }
 
     if(!esCategoriaPaisEspecial(categoria) || pick === "Sin pick"){
         return pick;
@@ -180,7 +185,7 @@ function crearHTMLBotonesVistaEspecial(categoria, vistaActiva){
 
             ${categoria === "goleador" ? `
                 <button
-                    class="${vistaActiva === "standing" ? "tab-activa" : ""}"
+                    class="tab-standing-goleador ${vistaActiva === "standing" ? "tab-activa" : ""}"
                     onclick="mostrarEstadisticas('${destino}', 'standing', grupoClasificadosActual, true, '${categoria}')"
                 >
                     🏅 Standing
@@ -191,10 +196,34 @@ function crearHTMLBotonesVistaEspecial(categoria, vistaActiva){
 }
 
 
+function ordenarUsuariosPorGoleadorRanking(lista, campo){
+    return [...lista].sort((a,b) => {
+        const ga = buscarGoleadorEnRanking(a[campo]);
+        const gb = buscarGoleadorEnRanking(b[campo]);
+        const golesA = ga ? Number(ga.goles) : -1;
+        const golesB = gb ? Number(gb.goles) : -1;
+        if(golesB !== golesA) return golesB - golesA;
+        const nombreA = (ga?.nombreCorto || a[campo] || "").toString();
+        const nombreB = (gb?.nombreCorto || b[campo] || "").toString();
+        return nombreA.localeCompare(nombreB, "es", {numeric:true}) || a.nombre.localeCompare(b.nombre, "es", {numeric:true});
+    });
+}
+
+function cambiarPaginaGoleadores(delta){
+    const total = Math.max(1, Math.ceil(((Array.isArray(goleadores) && goleadores.length) ? goleadores.length : 25) / 10));
+    paginaGoleadoresActual = Math.min(total, Math.max(1, paginaGoleadoresActual + delta));
+    mostrarEstadisticas('podio', 'standing', grupoClasificadosActual, true, 'goleador');
+}
+
 function crearHTMLStandingGoleador(){
-    const lista = Array.isArray(goleadores) && goleadores.length
-        ? goleadores.slice(0, 10)
+    const listaBase = Array.isArray(goleadores) && goleadores.length
+        ? goleadores.slice(0, 25)
         : crearGoleadoresFallback();
+
+    const totalPaginas = Math.max(1, Math.ceil(listaBase.length / 10));
+    paginaGoleadoresActual = Math.min(totalPaginas, Math.max(1, paginaGoleadoresActual || 1));
+    const inicio = (paginaGoleadoresActual - 1) * 10;
+    const lista = listaBase.slice(inicio, inicio + 10);
 
     return `
         <div class="especial-panel goleadores-panel">
@@ -204,7 +233,7 @@ function crearHTMLStandingGoleador(){
                 const bandera = pais ? `<img src="${getFlag(pais)}" alt="${pais}" class="flag-mini">` : "";
                 const abbr = g.abbr ? ` (${g.abbr})` : "";
                 const nombre = g.nombreCorto || "Por Definir";
-                const golesTexto = g.fallback ? "0 goles" : `${g.goles} ${Number(g.goles) === 1 ? "gol" : "goles"}`;
+                const golesTexto = g.fallback ? "S/N" : `${g.goles} ${Number(g.goles) === 1 ? "gol" : "goles"}`;
 
                 return `
                     <div class="especial-row especial-row-conteo goleador-row">
@@ -213,6 +242,12 @@ function crearHTMLStandingGoleador(){
                     </div>
                 `;
             }).join("")}
+
+            <div class="goleadores-paginacion">
+                <button onclick="cambiarPaginaGoleadores(-1)" ${paginaGoleadoresActual <= 1 ? "disabled" : ""}>◀</button>
+                <span>Página ${paginaGoleadoresActual} de ${totalPaginas}</span>
+                <button onclick="cambiarPaginaGoleadores(1)" ${paginaGoleadoresActual >= totalPaginas ? "disabled" : ""}>▶</button>
+            </div>
         </div>
     `;
 }
@@ -855,7 +890,7 @@ function crearHTMLGruposBracket(){
                     const equipos = completarTablaGrupoProvisional(grupo).map(e => e.nombre);
                     return `
                         <div class="bracket-group-col">
-                            <strong>${grupo}</strong>
+                            <strong class="bracket-group-letter">${grupo}</strong>
                             ${equipos.map(equipo => `
                                 <div class="bracket-group-team" title="${equipo}">
                                     <img src="${getFlag(equipo)}" alt="${equipo}" loading="lazy" crossorigin="anonymous">
@@ -871,26 +906,73 @@ function crearHTMLGruposBracket(){
 }
 
 
-async function exportarBracketImagen(){
+async function asegurarHtml2CanvasBracket(){
+    if(window.html2canvas) return window.html2canvas;
+
+    await new Promise((resolve, reject) => {
+        const existente = document.querySelector('script[data-bracket-html2canvas="1"]');
+        if(existente){
+            existente.addEventListener("load", resolve, { once:true });
+            existente.addEventListener("error", reject, { once:true });
+            return;
+        }
+
+        const script = document.createElement("script");
+        script.src = "https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js";
+        script.async = true;
+        script.dataset.bracketHtml2canvas = "1";
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+    });
+
+    if(!window.html2canvas) throw new Error("html2canvas no disponible");
+    return window.html2canvas;
+}
+
+function descargarCanvasBracket(canvas, formatoSeguro){
+    const fecha = new Date().toISOString().slice(0,10);
+    const mime = formatoSeguro === "jpg" ? "image/jpeg" : "image/png";
+    const extension = formatoSeguro === "jpg" ? "jpg" : "png";
+    const calidad = formatoSeguro === "jpg" ? 0.84 : 0.92;
+    const nombre = `bracket-mundial-2026-${fecha}.${extension}`;
+
+    const descargarURL = url => {
+        const link = document.createElement("a");
+        link.download = nombre;
+        link.href = url;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+    };
+
+    if(canvas.toBlob){
+        canvas.toBlob(blob => {
+            if(blob){
+                const url = URL.createObjectURL(blob);
+                descargarURL(url);
+                setTimeout(() => URL.revokeObjectURL(url), 1200);
+                return;
+            }
+            descargarURL(canvas.toDataURL(mime, calidad));
+        }, mime, calidad);
+    }else{
+        descargarURL(canvas.toDataURL(mime, calidad));
+    }
+}
+
+async function exportarBracketImagen(formato = "png"){
     const board = document.getElementById("bracketBoardExport");
     if(!board){
         alert("No se encontró el bracket para exportar.");
         return;
     }
 
-    if(!window.html2canvas){
-        alert("No se pudo cargar el generador de imagen. Intenta de nuevo más tarde.");
-        return;
-    }
-
     let sandbox = null;
 
     try{
-        /*
-            No capturamos el bracket directamente desde la vista móvil porque html2canvas
-            conserva el ancho visible del celular y la imagen sale muy alta/alargada.
-            Creamos una copia temporal en formato amplio, fuera de pantalla, y exportamos esa copia.
-        */
+        const html2canvasBracket = await asegurarHtml2CanvasBracket();
+
         sandbox = document.createElement("div");
         sandbox.className = "bracket-export-sandbox";
 
@@ -898,17 +980,45 @@ async function exportarBracketImagen(){
         clone.id = "bracketBoardExportCanvas";
         clone.classList.add("bracket-board-export-canvas");
 
+        clone.querySelectorAll("img").forEach(img => {
+            img.setAttribute("crossorigin", "anonymous");
+            img.loading = "eager";
+        });
+
         sandbox.appendChild(clone);
         document.body.appendChild(sandbox);
 
-        await new Promise(resolve => requestAnimationFrame(resolve));
+        const trophy = clone.querySelector(".bracket-trophy");
+        const trophyImg = clone.querySelector(".bracket-trophy-img");
+        if(trophy){
+            trophy.style.left = "50%";
+            trophy.style.right = "auto";
+            trophy.style.top = "50%";
+            trophy.style.transform = "translate(-50%, -50%)";
+            trophy.style.margin = "0";
+        }
+        if(trophyImg){
+            trophyImg.style.objectFit = "contain";
+            trophyImg.style.objectPosition = "center center";
+            trophyImg.style.display = "block";
+        }
 
-        const exportWidth = Math.ceil(clone.scrollWidth);
-        const exportHeight = Math.ceil(clone.scrollHeight);
+        await Promise.all(Array.from(clone.querySelectorAll("img")).map(img => {
+            if(img.complete && img.naturalWidth !== 0) return Promise.resolve();
+            return new Promise(resolve => {
+                img.onload = resolve;
+                img.onerror = resolve;
+            });
+        }));
+        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 
-        const canvas = await html2canvas(clone, {
+        const exportWidth = Math.ceil(Math.max(clone.scrollWidth, clone.offsetWidth));
+        const exportHeight = Math.ceil(Math.max(clone.scrollHeight, clone.offsetHeight));
+
+        const formatoSeguro = formato === "jpg" || formato === "jpeg" ? "jpg" : "png";
+        const canvas = await html2canvasBracket(clone, {
             backgroundColor: "#0f172a",
-            scale: 2,
+            scale: formatoSeguro === "jpg" ? 1.1 : 1.2,
             useCORS: true,
             allowTaint: false,
             logging: false,
@@ -917,17 +1027,16 @@ async function exportarBracketImagen(){
             windowWidth: exportWidth,
             windowHeight: exportHeight,
             scrollX: 0,
-            scrollY: 0
+            scrollY: 0,
+            x: 0,
+            y: 0
         });
 
-        const link = document.createElement("a");
-        link.download = `bracket-mundial-2026-${new Date().toISOString().slice(0,10)}.png`;
-        link.href = canvas.toDataURL("image/png");
-        link.click();
+        descargarCanvasBracket(canvas, formatoSeguro);
     }
     catch(error){
         console.error(error);
-        alert("No se pudo exportar el bracket como imagen.");
+        alert("No se pudo exportar el bracket como imagen. Revisa tu conexión e intenta de nuevo.");
     }
     finally{
         if(sandbox){
@@ -943,7 +1052,7 @@ function crearHTMLBracketVisualBase(){
         <p class="subtexto">Bracket dinámico de Knockout. Los equipos avanzan automáticamente conforme se capturan resultados.</p>
 
         <div class="bracket-export-actions">
-            <button onclick="exportarBracketImagen()">Exportar como Imagen</button>
+            <button onclick="exportarBracketImagen('jpg')">Exportar Imagen</button>
         </div>
 
         <div class="bracket-scroll-hint">Desliza horizontalmente para ver todo el bracket ↔</div>
@@ -976,8 +1085,11 @@ function crearHTMLPodioEspecial(){
         ? Math.round((resumen.favoritoCantidad / resumen.total) * 100)
         : 0;
 
-    const listaUsuarios = [...usuarios]
-        .sort((a,b) => a.nombre.localeCompare(b.nombre, "es"))
+    const listaUsuariosBase = categoria === "goleador"
+        ? ordenarUsuariosPorGoleadorRanking(usuarios, resumen.config.campo)
+        : [...usuarios].sort((a,b) => a.nombre.localeCompare(b.nombre, "es"));
+
+    const listaUsuarios = listaUsuariosBase
         .map(u => `
             <div class="especial-row">
                 <span>${u.nombre}</span>
@@ -1071,8 +1183,11 @@ function crearHTMLEspecial(categoria){
         ? Math.round((resumen.favoritoCantidad / resumen.total) * 100)
         : 0;
 
-    const listaUsuarios = [...usuarios]
-        .sort((a,b) => a.nombre.localeCompare(b.nombre, "es"))
+    const listaUsuariosBase = categoria === "goleador"
+        ? ordenarUsuariosPorGoleadorRanking(usuarios, resumen.config.campo)
+        : [...usuarios].sort((a,b) => a.nombre.localeCompare(b.nombre, "es"));
+
+    const listaUsuarios = listaUsuariosBase
         .map(u => `
             <div class="especial-row">
                 <span>${u.nombre}</span>

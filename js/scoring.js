@@ -160,6 +160,32 @@ function getResumenUsuarioKO(idUser){
     });
 }
 
+
+function sumarGolesPronosticadosPick(pick){
+    const golLoc = Number(pick?.golLoc);
+    const golVis = Number(pick?.golVis);
+
+    if(!Number.isFinite(golLoc) || !Number.isFinite(golVis)){
+        return 0;
+    }
+
+    return golLoc + golVis;
+}
+
+function getGolesPronosticadosUsuario(idUser, incluirKO = true){
+    const golesFaseGrupos = picks
+        .filter(p => Number(p.idUser) === Number(idUser))
+        .reduce((total, pick) => total + sumarGolesPronosticadosPick(pick), 0);
+
+    const golesKO = incluirKO
+        ? picksKO
+            .filter(p => Number(p.idUser) === Number(idUser))
+            .reduce((total, pick) => total + sumarGolesPronosticadosPick(pick), 0)
+        : 0;
+
+    return golesFaseGrupos + golesKO;
+}
+
 function getRankingKO(){
     return usuarios.map(u => ({
         id: u.id,

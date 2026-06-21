@@ -248,13 +248,13 @@ async function cargarPicksKO(){
 }
 
 /* =========================================================
-   GOLEADORES ESPN · Top 10 con fallback seguro
+   GOLEADORES TRANSFERMARKT · Top 25 con fallback seguro
    ---------------------------------------------------------
-   Intenta leer el ranking público de ESPN. Si CORS, red o
-   estructura HTML fallan, conserva 10 lugares Por Definir.
+   Intenta leer el ranking público de Transfermarkt. Si CORS,
+   red o estructura HTML fallan, conserva 25 lugares Por Definir.
    ========================================================= */
 function crearGoleadoresFallback(){
-    return Array.from({length:10}, (_, i) => ({
+    return Array.from({length:25}, (_, i) => ({
         pos: i + 1,
         nombre: "Por Definir",
         nombreCorto: "Por Definir",
@@ -266,91 +266,146 @@ function crearGoleadoresFallback(){
 }
 
 function quitarAcentosTexto(valor){
-    return (valor || "")
-        .toString()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "");
+    return (valor || "").toString().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+function limpiarTextoGoleador(valor){
+    return (valor || "").toString().replace(/\s+/g, " ").trim();
 }
 
 function abreviarNombreGoleador(nombre){
-    const limpio = (nombre || "").toString().trim().replace(/\s+/g, " ");
+    const limpio = limpiarTextoGoleador(nombre);
     if(!limpio || limpio.toLowerCase().includes("por definir")) return "Por Definir";
     const partes = limpio.split(" ").filter(Boolean);
     if(partes.length === 1) return partes[0];
     return `${partes[0].charAt(0).toUpperCase()}.${partes.slice(1).join(" ")}`;
 }
 
-function abreviarPaisGoleador(pais){
-    const limpio = quitarAcentosTexto(pais || "").trim();
-    const key = limpio.toLowerCase();
-    const excepciones = {
-        "nueva zelanda": "NZL",
-        "estados unidos": "USA",
-        "republica democratica del congo": "CON",
-        "rd congo": "CON",
-        "congo": "CON",
-        "paises bajos": "NED",
-        "holanda": "NED"
+function normalizarPaisGoleador(pais){
+    const limpio = limpiarTextoGoleador(pais);
+    const key = quitarAcentosTexto(limpio).toLowerCase();
+    const mapa = {
+        "algeria":"Argelia", "argentina":"Argentina", "australia":"Australia", "austria":"Austria",
+        "belgium":"Belgica", "bosnia-herzegovina":"Bosnia Herzegovina", "bosnia herzegovina":"Bosnia Herzegovina",
+        "brazil":"Brasil", "canada":"Canada", "cape verde":"Cabo Verde", "colombia":"Colombia",
+        "congo dr":"Congo", "democratic republic of the congo":"Congo", "curacao":"Curazao",
+        "denmark":"Dinamarca", "ecuador":"Ecuador", "egypt":"Egipto", "england":"Inglaterra",
+        "france":"Francia", "germany":"Alemania", "ghana":"Ghana", "haiti":"Haiti",
+        "iran":"Iran", "iraq":"Iraq", "ivory coast":"Costa de Marfil", "japan":"Japon",
+        "jordan":"Jordania", "mexico":"Mexico", "morocco":"Marruecos", "netherlands":"Holanda",
+        "new zealand":"Nueva Zelanda", "norway":"Noruega", "panama":"Panama", "paraguay":"Paraguay",
+        "portugal":"Portugal", "qatar":"Qatar", "saudi arabia":"Arabia Saudita", "scotland":"Escocia",
+        "senegal":"Senegal", "serbia":"Serbia", "south africa":"Sudafrica", "south korea":"Corea del Sur",
+        "spain":"Espana", "sweden":"Suecia", "switzerland":"Suiza", "tunisia":"Tunez",
+        "turkey":"Turquia", "ukraine":"Ucrania", "united states":"Estados Unidos",
+        "united states of america":"Estados Unidos", "uruguay":"Uruguay", "uzbekistan":"Uzbekistan"
     };
-    if(excepciones[key]) return excepciones[key];
-    return limpio ? limpio.slice(0, 3).toUpperCase() : "";
+    return mapa[key] || limpio;
+}
+
+function abreviarPaisGoleador(pais){
+    const normalizado = normalizarPaisGoleador(pais);
+    const key = quitarAcentosTexto(normalizado).toLowerCase();
+    const excepciones = {
+        "alemania":"GER", "arabia saudita":"KSA", "argelia":"ALG", "argentina":"ARG", "australia":"AUS",
+        "austria":"AUT", "belgica":"BEL", "bosnia herzegovina":"BIH", "brasil":"BRA", "cabo verde":"CPV",
+        "canada":"CAN", "colombia":"COL", "congo":"COD", "corea del sur":"KOR", "costa de marfil":"CIV",
+        "curazao":"CUW", "dinamarca":"DEN", "ecuador":"ECU", "egipto":"EGY", "escocia":"SCO",
+        "espana":"ESP", "españa":"ESP", "estados unidos":"USA", "francia":"FRA", "ghana":"GHA",
+        "haiti":"HAI", "holanda":"NED", "inglaterra":"ENG", "iran":"IRN", "iraq":"IRQ", "japon":"JPN",
+        "jordania":"JOR", "marruecos":"MAR", "mexico":"MEX", "nueva zelanda":"NZL", "noruega":"NOR",
+        "panama":"PAN", "paraguay":"PAR", "portugal":"POR", "qatar":"QAT", "senegal":"SEN", "serbia":"SRB",
+        "sudafrica":"RSA", "suecia":"SWE", "suiza":"SUI", "tunez":"TUN", "turquia":"TUR", "ucrania":"UKR",
+        "uruguay":"URU", "uzbekistan":"UZB"
+    };
+    return excepciones[key] || (normalizado ? quitarAcentosTexto(normalizado).slice(0, 3).toUpperCase() : "");
 }
 
 function extraerTextoCeldaGoleador(celda){
-    return (celda?.innerText || celda?.textContent || "").replace(/\s+/g, " ").trim();
+    return limpiarTextoGoleador(celda?.innerText || celda?.textContent || "");
 }
 
-function parsearGoleadoresESPN(html){
-    const doc = new DOMParser().parseFromString(html, "text/html");
-    const tablas = [...doc.querySelectorAll("table")];
-    const filas = tablas.flatMap(tabla => [...tabla.querySelectorAll("tbody tr")]);
-    const salida = [];
+function obtenerPaisFilaTransfermarkt(fila){
+    const imgs = [...fila.querySelectorAll("img")];
+    const imgPais = imgs.find(img => {
+        const src = (img.getAttribute("src") || "").toLowerCase();
+        const clase = (img.getAttribute("class") || "").toLowerCase();
+        return src.includes("flaggen") || clase.includes("flaggen") || clase.includes("flag");
+    });
+    return limpiarTextoGoleador(imgPais?.getAttribute("title") || imgPais?.getAttribute("alt") || "");
+}
 
+function obtenerNombreFilaTransfermarkt(fila, textos){
+    const linkJugador = fila.querySelector("td.hauptlink a[href*='/profil/spieler/'], a[href*='/profil/spieler/']");
+    const nombreLink = limpiarTextoGoleador(linkJugador?.textContent || "");
+    if(nombreLink) return nombreLink;
+    return textos.find(t => /[A-Za-zÁÉÍÓÚÑáéíóúñ]/.test(t) && !/^\d+$/.test(t) && !/^(centre|right|left|attacking|central|defensive|goalkeeper|forward|winger|midfield|back|striker)/i.test(t)) || "Por Definir";
+}
+
+function parsearGoleadoresTransfermarktHTML(html){
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    const filas = [...doc.querySelectorAll("table.items tbody tr, table tbody tr")];
+    const salida = [];
     filas.forEach(fila => {
-        if(salida.length >= 10) return;
+        if(salida.length >= 25) return;
         const celdas = [...fila.querySelectorAll("td")];
         if(celdas.length < 3) return;
-
         const textos = celdas.map(extraerTextoCeldaGoleador).filter(Boolean);
-        const pos = Number((textos[0] || "").match(/\d+/)?.[0]);
+        const pos = Number((textos[0] || "").match(/^\d+/)?.[0]);
         if(!Number.isFinite(pos)) return;
-
-        const goles = Number((textos[textos.length - 1] || "").match(/\d+/)?.[0] || 0);
-        const candidatoNombre = textos.find((t, idx) => idx > 0 && /[A-Za-zÁÉÍÓÚÑáéíóúñ]/.test(t) && !/^\d+$/.test(t)) || "Por Definir";
-        let pais = "";
-
-        for(let i = 2; i < textos.length - 1; i++){
-            const t = textos[i];
-            if(/[A-Za-zÁÉÍÓÚÑáéíóúñ]/.test(t) && t !== candidatoNombre){
-                pais = t;
-                break;
-            }
-        }
-
-        salida.push({
-            pos,
-            nombre: candidatoNombre,
-            nombreCorto: abreviarNombreGoleador(candidatoNombre),
-            pais,
-            abbr: abreviarPaisGoleador(pais),
-            goles,
-            fallback: false
-        });
+        const nombre = obtenerNombreFilaTransfermarkt(fila, textos);
+        const pais = normalizarPaisGoleador(obtenerPaisFilaTransfermarkt(fila));
+        const numeros = textos.flatMap(t => (t.match(/\d+/g) || []).map(Number)).filter(Number.isFinite);
+        const goles = numeros.length ? numeros[numeros.length - 1] : 0;
+        salida.push({ pos, nombre, nombreCorto: abreviarNombreGoleador(nombre), pais, abbr: abreviarPaisGoleador(pais), goles, fallback: false });
     });
+    return salida.slice(0, 25);
+}
 
-    return salida.slice(0, 10);
+function parsearGoleadoresTransfermarktTexto(texto){
+    const lineas = (texto || "").split(/\n+/).map(limpiarTextoGoleador).filter(Boolean);
+    const salida = [];
+    const paises = ["Germany","Argentina","Canada","Brazil","United States","Netherlands","Norway","England","Morocco","Sweden","France","New Zealand","Switzerland","Colombia","South Korea","Mexico","Portugal","Spain","Uruguay","Japan","Belgium","Ghana","Saudi Arabia","Austria"];
+    for(let i = 0; i < lineas.length && salida.length < 25; i++){
+        const match = lineas[i].match(/^(\d{1,2})\s+(.+)$/);
+        if(!match) continue;
+        const pos = Number(match[1]);
+        let nombre = limpiarTextoGoleador(match[2].replace(/Image:\s*/i, ""));
+        if(!nombre || /world cup|latest|player|club/i.test(nombre)) continue;
+        const ventana = lineas.slice(i, i + 6).join(" ");
+        const paisOriginal = paises.find(p => new RegExp(`\\b${p}\\b`, "i").test(ventana)) || "";
+        const pais = normalizarPaisGoleador(paisOriginal);
+        const nums = (ventana.match(/\b\d+\b/g) || []).map(Number);
+        const goles = nums.length ? nums[nums.length - 1] : 0;
+        salida.push({ pos, nombre, nombreCorto: abreviarNombreGoleador(nombre), pais, abbr: abreviarPaisGoleador(pais), goles, fallback: false });
+    }
+    return salida.slice(0, 25);
+}
+
+function parsearGoleadoresTransfermarkt(contenido){
+    const listaHTML = parsearGoleadoresTransfermarktHTML(contenido || "");
+    return listaHTML.length ? listaHTML : parsearGoleadoresTransfermarktTexto(contenido || "");
+}
+
+async function fetchTextoGoleadores(url){
+    const res = await fetch(url, { cache: "no-store" });
+    if(!res.ok) throw new Error(`Goleadores ${res.status}`);
+    return await res.text();
 }
 
 async function cargarGoleadores(){
-    try{
-        const res = await fetch(urlGoleadoresESPN, { cache: "no-store" });
-        if(!res.ok) throw new Error(`ESPN ${res.status}`);
-        const html = await res.text();
-        const lista = parsearGoleadoresESPN(html);
-        goleadores = lista.length ? lista : crearGoleadoresFallback();
+    const urls = [urlGoleadoresTransfermarkt, urlGoleadoresTransfermarktProxy].filter(Boolean);
+    for(const url of urls){
+        try{
+            const contenido = await fetchTextoGoleadores(url);
+            const lista = parsearGoleadoresTransfermarkt(contenido);
+            if(lista.length){
+                goleadores = lista;
+                return;
+            }
+        }catch(error){
+            console.warn("No se pudo cargar Transfermarkt goleadores desde:", url, error);
+        }
     }
-    catch(error){
-        console.warn("No se pudo cargar ESPN goleadores. Usando fallback.", error);
-        goleadores = crearGoleadoresFallback();
-    }
+    goleadores = crearGoleadoresFallback();
 }

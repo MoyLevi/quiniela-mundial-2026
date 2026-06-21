@@ -22,6 +22,9 @@ function getFlag(country){
         "corea del sur": "kr",
         "costa de marfil": "ci",
         "croacia": "hr",
+        "dinamarca": "dk",
+        "serbia": "rs",
+        "ucrania": "ua",
         "curazao": "cw",
         "ecuador": "ec",
         "egipto": "eg",
@@ -62,6 +65,71 @@ function getFlag(country){
     return code
         ? `https://flagcdn.com/w80/${code}.png`
         : `https://flagcdn.com/w80/un.png`;
+}
+
+
+/* =========================================================
+   Helpers Goleador Especial · Ranking Transfermarkt
+   ========================================================= */
+function normalizarTextoComparacion(valor){
+    return (valor || "")
+        .toString()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, " ")
+        .trim();
+}
+
+function normalizarNombreGoleadorPick(valor){
+    return normalizarTextoComparacion(valor)
+        .replace(/^\d+\s+/, "")
+        .replace(/\b\d+\s*goles?\b/g, "")
+        .replace(/\bs\s*n\b/g, "")
+        .trim();
+}
+
+function buscarGoleadorEnRanking(valor){
+    const pick = normalizarNombreGoleadorPick(valor);
+    if(!pick || pick === "sin pick" || pick === "por definir") return null;
+
+    const lista = Array.isArray(goleadores) ? goleadores.filter(g => !g.fallback) : [];
+    return lista.find(g => {
+        const nombre = normalizarNombreGoleadorPick(g.nombre);
+        const corto = normalizarNombreGoleadorPick(g.nombreCorto);
+        return pick === nombre || pick === corto || nombre.includes(pick) || pick.includes(nombre) || corto.includes(pick) || pick.includes(corto);
+    }) || null;
+}
+
+function crearHTMLGoleadorEspecial(valor, opciones = {}){
+    const pick = (valor || "").toString().trim();
+    if(!pick) return "Sin pick";
+
+    const jugador = buscarGoleadorEnRanking(pick);
+    const nombre = jugador?.nombreCorto || (typeof abreviarNombreGoleador === "function" ? abreviarNombreGoleador(pick) : pick);
+    const pais = jugador?.pais || "";
+    const bandera = pais ? `<img src="${getFlag(pais)}" alt="${pais}" class="flag-mini">` : "";
+    const abbr = jugador?.abbr ? ` (${jugador.abbr})` : "";
+    const goles = jugador ? jugador.goles : null;
+    const golesTexto = jugador ? `${goles} ${Number(goles) === 1 ? "gol" : "goles"}` : "S/N";
+    const separador = opciones.simboloPuntos ? " · " : " · ";
+    const incluirGoles = opciones.incluirGoles !== false;
+
+    return `<span class="goleador-pick-inline">${nombre} ${bandera}${abbr}${incluirGoles ? `${separador}${golesTexto}` : ""}</span>`;
+}
+
+function getGoleadoresTopPrimerLugar(){
+    const lista = Array.isArray(goleadores) ? goleadores.filter(g => !g.fallback) : [];
+    if(!lista.length) return [];
+    const minPos = Math.min(...lista.map(g => Number(g.pos)).filter(Number.isFinite));
+    return lista.filter(g => Number(g.pos) === minPos);
+}
+
+function pickGoleadorEsPrimerLugar(valor){
+    const jugador = buscarGoleadorEnRanking(valor);
+    if(!jugador) return false;
+    const primeros = getGoleadoresTopPrimerLugar();
+    return primeros.some(g => normalizarNombreGoleadorPick(g.nombre) === normalizarNombreGoleadorPick(jugador.nombre));
 }
 
 function actualizarTimestamp(){

@@ -432,6 +432,23 @@ function getTablaGrupo(grupo){
         .sort((a,b) => compararEquiposGrupo(a, b, grupo));
 }
 
+function crearHTMLFormaGrupo(e){
+    const victorias = Math.max(0, Number(e.pg || 0));
+    const empates = Math.max(0, Number(e.pe || 0));
+    const derrotas = Math.max(0, Number(e.pp || 0));
+    const jugados = Math.max(0, Number(e.pj || 0));
+    const porJugar = Math.max(0, 3 - jugados);
+
+    const puntos = [
+        ...Array(victorias).fill('<span class="forma-dot forma-win" title="Victoria"></span>'),
+        ...Array(empates).fill('<span class="forma-dot forma-draw" title="Empate"></span>'),
+        ...Array(derrotas).fill('<span class="forma-dot forma-loss" title="Derrota"></span>'),
+        ...Array(porJugar).fill('<span class="forma-pending" title="Por jugar">·</span>')
+    ];
+
+    return `<div class="equipo-forma" aria-label="Forma del equipo">${puntos.join("")}</div>`;
+}
+
 function crearHTMLTablaGrupos(grupo = "A"){
     const grupoSeguro = /^[A-L]$/.test(grupo) ? grupo : "A";
     const tabla = getTablaGrupo(grupoSeguro);
@@ -451,17 +468,18 @@ function crearHTMLTablaGrupos(grupo = "A"){
                     <span>#</span>
                     <span>Equipo</span>
                     <span>Pts</span>
-                    <span>PJ</span>
-                    <span>DG</span>
+                    <span>+/-</span>
                     <span>GF</span>
                 </div>
 
                 ${tabla.length === 0 ? `<p class="subtexto">No hay equipos detectados para este grupo.</p>` : tabla.map((e, index) => `
                     <div class="tabla-grupo-row ${equipoClasificadoReal(e.nombre, grupoSeguro) ? 'equipo-clasificado-row' : ''}">
-                        <span>${index + 1}</span>
-                        <span class="equipo-grupo-nombre">${crearHTMLPaisConBandera(e.nombre)}</span>
+                        <span class="tabla-posicion">${index + 1}</span>
+                        <span class="equipo-grupo-nombre">
+                            <span class="equipo-grupo-linea">${crearHTMLPaisConBandera(e.nombre)}</span>
+                            ${crearHTMLFormaGrupo(e)}
+                        </span>
                         <strong>${e.pts}</strong>
-                        <span>${e.pj}</span>
                         <span>${e.dg}</span>
                         <span>${e.gf}</span>
                     </div>
@@ -819,10 +837,20 @@ function getResumenEspecialesUsuario(idUser){
     let aciertos = 0;
     let puntosMaximos = 0;
 
-    // Regla provisional: campeón correcto vale 10 pts cuando la Final ya tiene campeón real.
+    // Campeón correcto vale 10 pts cuando la Final ya tiene campeón real.
     if(campeonReal){
         puntosMaximos += 10;
         if(usuario && normalizarNombreEquipo(usuario.campeon) === normalizarNombreEquipo(campeonReal)){
+            puntos += 10;
+            aciertos += 1;
+        }
+    }
+
+    // Goleador: solo el/los primer lugar(es) del ranking real suman 10 pts.
+    const hayPrimerLugarGoleador = typeof getGoleadoresTopPrimerLugar === "function" && getGoleadoresTopPrimerLugar().length > 0;
+    if(hayPrimerLugarGoleador){
+        puntosMaximos += 10;
+        if(usuario && typeof pickGoleadorEsPrimerLugar === "function" && pickGoleadorEsPrimerLugar(usuario.goleador)){
             puntos += 10;
             aciertos += 1;
         }
@@ -915,13 +943,21 @@ function crearHTMLRankingEspeciales(lista){
         return `<p class="subtexto">No hay picks especiales todavía.</p>`;
     }
 
-    return lista.map((u, index) => `
+    const leyendaEspeciales = `
+        <div class="standing-especiales-leyenda" aria-label="Leyenda de especiales">
+            <span class="especial-leyenda-item"><span class="especial-icono-trofeo" aria-label="Campeón" title="Campeón">🏆</span> Campeón</span>
+            <span class="especial-leyenda-separador">·</span>
+            <span class="especial-leyenda-item"><img src="img/trionda.png" alt="Goleador" title="Goleador" class="especial-icono-goleador"> Goleador</span>
+        </div>
+    `;
+
+    return leyendaEspeciales + lista.map((u, index) => `
         <div class="ranking-card ranking-card-detallado" onclick="verDetalleUsuario(${u.id}, 1, false, 'especiales')">
             <div class="ranking-pos">${index + 1}</div>
             <div class="ranking-user ranking-user-especiales">
                 ${u.nombre}
-                <span class="especial-linea">Campeón: ${crearHTMLPaisEspecialSeguro(u.campeon)}</span>
-                <span class="especial-linea">Goleador: ${getTextoEspecial(u.goleador)}</span>
+                <span class="especial-linea especial-linea-campeon"><span class="especial-icono-trofeo" aria-label="Campeón" title="Campeón">🏆</span>${crearHTMLPaisEspecialSeguro(u.campeon)}</span>
+                <span class="especial-linea especial-linea-goleador"><img src="img/trionda.png" alt="Goleador" title="Goleador" class="especial-icono-goleador">${crearHTMLGoleadorEspecial(u.goleador, { simboloPuntos:true })}</span>
             </div>
             <div class="ranking-puntos">${u.puntos} pts</div>
         </div>
@@ -1201,7 +1237,7 @@ function crearHTMLPicksEspecialesUsuario(usuario){
 
             <div class="pick-especial-usuario-card pick-especial-largo">
                 <strong>⚽ Goleador</strong>
-                <span>${getTextoEspecial(usuario?.goleador)}</span>
+                <span>${crearHTMLGoleadorEspecial(usuario?.goleador, { simboloPuntos:true })}</span>
             </div>
 
             <div class="pick-especial-usuario-card pick-especial-largo">
@@ -1441,6 +1477,7 @@ function verDetalleUsuario(idUser, pagina = 1, scrollPronosticos = false, vista 
     const puntosTotales = activarStage2
         ? resumen.puntos + resumenKO.puntos + resumenClasificados.puntos + resumenEspeciales.puntos
         : resumen.puntos;
+    const golesPronosticados = getGolesPronosticadosUsuario(idUser, true);
 
     let html = `
         <button onclick="mostrarTabla(tipoTablaActual)" class="btnVolver">⬅ Volver</button>
@@ -1457,6 +1494,7 @@ function verDetalleUsuario(idUser, pagina = 1, scrollPronosticos = false, vista 
             <div class="resumen-card-secundario"><strong>${resumen.diferencias}</strong><span>Diferencia</span></div>
             <div class="resumen-card-secundario"><strong>${resumen.ganadores}</strong><span>Ganador</span></div>
             <div class="resumen-card-secundario"><strong>${resumen.fallos}</strong><span>Fallos</span></div>
+            <div class="resumen-card-secundario resumen-card-goles"><strong>${golesPronosticados}</strong><span>Goles Pronosticados</span></div>
         </div>
 
         ${crearHTMLTabsDetalleUsuario(idUser, vista, detalleSeguro, grupoClasificados)}
