@@ -248,21 +248,15 @@ async function cargarPicksKO(){
 }
 
 /* =========================================================
-   GOLEADORES TRANSFERMARKT · Top 25 con fallback seguro
+   GOLEADORES · HC publicada en Google Sheets
    ---------------------------------------------------------
-   Intenta leer el ranking público de Transfermarkt. Si CORS,
-   red o estructura HTML fallan, conserva 25 lugares Por Definir.
+   Lee la nueva tabla manual de goleadores:
+   POS | Nombre | Equipo | P | G
+   Respeta posiciones empatadas y muestra formato:
+   L.Messi (Bandera) (ARG) 3 goles
    ========================================================= */
 function crearGoleadoresFallback(){
-    return Array.from({length:25}, (_, i) => ({
-        pos: i + 1,
-        nombre: "Por Definir",
-        nombreCorto: "Por Definir",
-        pais: "",
-        abbr: "",
-        goles: 0,
-        fallback: true
-    }));
+    return [];
 }
 
 function quitarAcentosTexto(valor){
@@ -285,25 +279,65 @@ function normalizarPaisGoleador(pais){
     const limpio = limpiarTextoGoleador(pais);
     const key = quitarAcentosTexto(limpio).toLowerCase();
     const mapa = {
-        "algeria":"Argelia", "argentina":"Argentina", "australia":"Australia", "austria":"Austria",
-        "belgium":"Belgica", "bosnia-herzegovina":"Bosnia Herzegovina", "bosnia herzegovina":"Bosnia Herzegovina",
-        "brazil":"Brasil", "canada":"Canada", "cape verde":"Cabo Verde", "colombia":"Colombia",
-        "congo dr":"Congo", "democratic republic of the congo":"Congo", "curacao":"Curazao",
-        "denmark":"Dinamarca", "ecuador":"Ecuador", "egypt":"Egipto", "england":"Inglaterra",
-        "france":"Francia", "germany":"Alemania", "ghana":"Ghana", "haiti":"Haiti",
-        "iran":"Iran", "iraq":"Iraq", "ivory coast":"Costa de Marfil", "japan":"Japon",
-        "jordan":"Jordania", "mexico":"Mexico", "morocco":"Marruecos", "netherlands":"Holanda",
-        "new zealand":"Nueva Zelanda", "norway":"Noruega", "panama":"Panama", "paraguay":"Paraguay",
-        "portugal":"Portugal", "qatar":"Qatar", "saudi arabia":"Arabia Saudita", "scotland":"Escocia",
-        "senegal":"Senegal", "serbia":"Serbia", "south africa":"Sudafrica", "south korea":"Corea del Sur",
-        "spain":"Espana", "sweden":"Suecia", "switzerland":"Suiza", "tunisia":"Tunez",
-        "turkey":"Turquia", "ukraine":"Ucrania", "united states":"Estados Unidos",
-        "united states of america":"Estados Unidos", "uruguay":"Uruguay", "uzbekistan":"Uzbekistan"
+        "algeria":"Argelia", "argelia":"Argelia",
+        "argentina":"Argentina",
+        "australia":"Australia",
+        "austria":"Austria",
+        "belgium":"Belgica", "belgica":"Belgica", "bélgica":"Belgica",
+        "bosnia-herzegovina":"Bosnia Herzegovina", "bosnia herzegovina":"Bosnia Herzegovina", "bos":"Bosnia Herzegovina",
+        "brazil":"Brasil", "brasil":"Brasil",
+        "canada":"Canada", "canadá":"Canada",
+        "cape verde":"Cabo Verde", "cabo verde":"Cabo Verde",
+        "colombia":"Colombia",
+        "congo dr":"Congo", "democratic republic of the congo":"Congo", "congo":"Congo",
+        "curacao":"Curazao", "curazao":"Curazao", "curazao":"Curazao",
+        "czechia":"Republica Checa", "republica checa":"Republica Checa", "república checa":"Republica Checa", "che":"Republica Checa",
+        "denmark":"Dinamarca", "dinamarca":"Dinamarca",
+        "ecuador":"Ecuador",
+        "egypt":"Egipto", "egipto":"Egipto",
+        "england":"Inglaterra", "inglaterra":"Inglaterra",
+        "france":"Francia", "francia":"Francia",
+        "germany":"Alemania", "alemania":"Alemania",
+        "ghana":"Ghana",
+        "haiti":"Haiti", "haití":"Haiti",
+        "iran":"Iran", "irán":"Iran",
+        "iraq":"Iraq",
+        "ivory coast":"Costa de Marfil", "costa de marfil":"Costa de Marfil",
+        "japan":"Japon", "japon":"Japon", "japón":"Japon",
+        "jordan":"Jordania", "jordania":"Jordania",
+        "mexico":"Mexico", "méxico":"Mexico",
+        "morocco":"Marruecos", "marruecos":"Marruecos",
+        "netherlands":"Holanda", "holanda":"Holanda", "paises bajos":"Holanda", "países bajos":"Holanda",
+        "new zealand":"Nueva Zelanda", "nueva zelanda":"Nueva Zelanda",
+        "norway":"Noruega", "noruega":"Noruega",
+        "panama":"Panama", "panamá":"Panama",
+        "paraguay":"Paraguay",
+        "portugal":"Portugal",
+        "qatar":"Qatar",
+        "saudi arabia":"Arabia Saudita", "arabia saudita":"Arabia Saudita",
+        "scotland":"Escocia", "escocia":"Escocia",
+        "senegal":"Senegal",
+        "serbia":"Serbia",
+        "south africa":"Sudafrica", "sudafrica":"Sudafrica", "sudáfrica":"Sudafrica",
+        "south korea":"Corea del Sur", "corea del sur":"Corea del Sur",
+        "spain":"Espana", "espana":"Espana", "españa":"Espana",
+        "sweden":"Suecia", "suecia":"Suecia",
+        "switzerland":"Suiza", "suiza":"Suiza",
+        "tunisia":"Tunez", "tunez":"Tunez", "túnez":"Tunez",
+        "turkey":"Turquia", "turquia":"Turquia", "turquía":"Turquia",
+        "ukraine":"Ucrania", "ucrania":"Ucrania",
+        "united states":"Estados Unidos", "united states of america":"Estados Unidos", "estados unidos":"Estados Unidos",
+        "uruguay":"Uruguay",
+        "uzbekistan":"Uzbekistan", "uzbekistán":"Uzbekistan"
     };
     return mapa[key] || limpio;
 }
 
 function abreviarPaisGoleador(pais){
+    const rawKey = quitarAcentosTexto(limpiarTextoGoleador(pais)).toLowerCase();
+    if(rawKey === "che") return "CHE";
+    if(rawKey === "bos") return "BOS";
+
     const normalizado = normalizarPaisGoleador(pais);
     const key = quitarAcentosTexto(normalizado).toLowerCase();
     const excepciones = {
@@ -311,93 +345,63 @@ function abreviarPaisGoleador(pais){
         "austria":"AUT", "belgica":"BEL", "bosnia herzegovina":"BIH", "brasil":"BRA", "cabo verde":"CPV",
         "canada":"CAN", "colombia":"COL", "congo":"COD", "corea del sur":"KOR", "costa de marfil":"CIV",
         "curazao":"CUW", "dinamarca":"DEN", "ecuador":"ECU", "egipto":"EGY", "escocia":"SCO",
-        "espana":"ESP", "españa":"ESP", "estados unidos":"USA", "francia":"FRA", "ghana":"GHA",
+        "espana":"ESP", "estados unidos":"USA", "francia":"FRA", "ghana":"GHA",
         "haiti":"HAI", "holanda":"NED", "inglaterra":"ENG", "iran":"IRN", "iraq":"IRQ", "japon":"JPN",
         "jordania":"JOR", "marruecos":"MAR", "mexico":"MEX", "nueva zelanda":"NZL", "noruega":"NOR",
-        "panama":"PAN", "paraguay":"PAR", "portugal":"POR", "qatar":"QAT", "senegal":"SEN", "serbia":"SRB",
-        "sudafrica":"RSA", "suecia":"SWE", "suiza":"SUI", "tunez":"TUN", "turquia":"TUR", "ucrania":"UKR",
-        "uruguay":"URU", "uzbekistan":"UZB"
+        "panama":"PAN", "paraguay":"PAR", "portugal":"POR", "qatar":"QAT", "republica checa":"CZE",
+        "senegal":"SEN", "serbia":"SRB", "sudafrica":"RSA", "suecia":"SWE", "suiza":"SUI",
+        "tunez":"TUN", "turquia":"TUR", "ucrania":"UKR", "uruguay":"URU", "uzbekistan":"UZB"
     };
     return excepciones[key] || (normalizado ? quitarAcentosTexto(normalizado).slice(0, 3).toUpperCase() : "");
 }
 
-function extraerTextoCeldaGoleador(celda){
-    return limpiarTextoGoleador(celda?.innerText || celda?.textContent || "");
-}
+function parsearGoleadoresCSV(texto){
+    const data = parseCSV(texto || "");
+    if(!data.length) return [];
 
-function obtenerPaisFilaTransfermarkt(fila){
-    const imgs = [...fila.querySelectorAll("img")];
-    const imgPais = imgs.find(img => {
-        const src = (img.getAttribute("src") || "").toLowerCase();
-        const clase = (img.getAttribute("class") || "").toLowerCase();
-        return src.includes("flaggen") || clase.includes("flaggen") || clase.includes("flag");
-    });
-    return limpiarTextoGoleador(imgPais?.getAttribute("title") || imgPais?.getAttribute("alt") || "");
-}
+    const headers = data[0].map(h => limpiarTextoGoleador(h));
 
-function obtenerNombreFilaTransfermarkt(fila, textos){
-    const linkJugador = fila.querySelector("td.hauptlink a[href*='/profil/spieler/'], a[href*='/profil/spieler/']");
-    const nombreLink = limpiarTextoGoleador(linkJugador?.textContent || "");
-    if(nombreLink) return nombreLink;
-    return textos.find(t => /[A-Za-zÁÉÍÓÚÑáéíóúñ]/.test(t) && !/^\d+$/.test(t) && !/^(centre|right|left|attacking|central|defensive|goalkeeper|forward|winger|midfield|back|striker)/i.test(t)) || "Por Definir";
-}
+    return data.slice(1).map(r => {
+        const obj = {};
+        headers.forEach((h, i) => { obj[h] = limpiarTextoGoleador(r[i] || ""); });
 
-function parsearGoleadoresTransfermarktHTML(html){
-    const doc = new DOMParser().parseFromString(html, "text/html");
-    const filas = [...doc.querySelectorAll("table.items tbody tr, table tbody tr")];
-    const salida = [];
-    filas.forEach(fila => {
-        if(salida.length >= 25) return;
-        const celdas = [...fila.querySelectorAll("td")];
-        if(celdas.length < 3) return;
-        const textos = celdas.map(extraerTextoCeldaGoleador).filter(Boolean);
-        const pos = Number((textos[0] || "").match(/^\d+/)?.[0]);
-        if(!Number.isFinite(pos)) return;
-        const nombre = obtenerNombreFilaTransfermarkt(fila, textos);
-        const pais = normalizarPaisGoleador(obtenerPaisFilaTransfermarkt(fila));
-        const numeros = textos.flatMap(t => (t.match(/\d+/g) || []).map(Number)).filter(Number.isFinite);
-        const goles = numeros.length ? numeros[numeros.length - 1] : 0;
-        salida.push({ pos, nombre, nombreCorto: abreviarNombreGoleador(nombre), pais, abbr: abreviarPaisGoleador(pais), goles, fallback: false });
-    });
-    return salida.slice(0, 25);
-}
+        const pos = Number(obj["POS"] || obj["Pos"] || obj["#"] || "");
+        const nombre = obj["Nombre"] || obj["NOMBRE"] || obj["Player"] || obj["Jugador"] || "";
+        const pais = normalizarPaisGoleador(obj["Equipo"] || obj["EQUIPO"] || obj["Club"] || obj["Selección"] || "");
+        const partidos = Number(obj["P"] || obj["PJ"] || obj["Partidos"] || 0);
+        const goles = Number(obj["G"] || obj["Goles"] || obj["GOLES"] || 0);
 
-function parsearGoleadoresTransfermarktTexto(texto){
-    const lineas = (texto || "").split(/\n+/).map(limpiarTextoGoleador).filter(Boolean);
-    const salida = [];
-    const paises = ["Germany","Argentina","Canada","Brazil","United States","Netherlands","Norway","England","Morocco","Sweden","France","New Zealand","Switzerland","Colombia","South Korea","Mexico","Portugal","Spain","Uruguay","Japan","Belgium","Ghana","Saudi Arabia","Austria"];
-    for(let i = 0; i < lineas.length && salida.length < 25; i++){
-        const match = lineas[i].match(/^(\d{1,2})\s+(.+)$/);
-        if(!match) continue;
-        const pos = Number(match[1]);
-        let nombre = limpiarTextoGoleador(match[2].replace(/Image:\s*/i, ""));
-        if(!nombre || /world cup|latest|player|club/i.test(nombre)) continue;
-        const ventana = lineas.slice(i, i + 6).join(" ");
-        const paisOriginal = paises.find(p => new RegExp(`\\b${p}\\b`, "i").test(ventana)) || "";
-        const pais = normalizarPaisGoleador(paisOriginal);
-        const nums = (ventana.match(/\b\d+\b/g) || []).map(Number);
-        const goles = nums.length ? nums[nums.length - 1] : 0;
-        salida.push({ pos, nombre, nombreCorto: abreviarNombreGoleador(nombre), pais, abbr: abreviarPaisGoleador(pais), goles, fallback: false });
-    }
-    return salida.slice(0, 25);
-}
+        if(!nombre || !Number.isFinite(pos)) return null;
 
-function parsearGoleadoresTransfermarkt(contenido){
-    const listaHTML = parsearGoleadoresTransfermarktHTML(contenido || "");
-    return listaHTML.length ? listaHTML : parsearGoleadoresTransfermarktTexto(contenido || "");
-}
-
-async function fetchTextoGoleadores(url){
-    const res = await fetch(url, { cache: "no-store" });
-    if(!res.ok) throw new Error(`Goleadores ${res.status}`);
-    return await res.text();
+        return {
+            pos,
+            nombre,
+            nombreCorto: abreviarNombreGoleador(nombre),
+            pais,
+            abbr: abreviarPaisGoleador(pais),
+            partidos: Number.isFinite(partidos) ? partidos : 0,
+            goles: Number.isFinite(goles) ? goles : 0,
+            fallback: false
+        };
+    }).filter(Boolean).slice(0, 50);
 }
 
 async function cargarGoleadores(){
-    /*
-       Goleadores reales/Transfermarkt PENDIENTE.
-       Se Bugea el Arranque: se elimina la carga externa y se deja el standing en Por Definir.
-       Los picks originales de HC Usuarios siguen apareciendo completos en Conteo General y Picks por Usuario.
-    */
-    goleadores = crearGoleadoresFallback();
+    try{
+        if(typeof urlGoleadores !== "string" || !urlGoleadores){
+            goleadores = [];
+            return;
+        }
+
+        const res = await fetch(urlGoleadores, { cache: "no-store" });
+        if(!res.ok) throw new Error(`Goleadores ${res.status}`);
+
+        const text = await res.text();
+        goleadores = parsearGoleadoresCSV(text);
+    }
+    catch(error){
+        console.warn("No se pudieron cargar goleadores:", error);
+        goleadores = [];
+    }
 }
+

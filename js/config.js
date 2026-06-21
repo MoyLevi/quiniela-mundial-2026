@@ -12,10 +12,8 @@ const urlLugaresPro = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS2YHMj7n
 const urlKnockout = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS2YHMj7nASBNVX0vpYD3P0Uz41gHRsf4D52qu94vfmUX-vZtjN0NV0ONBI6WPWFJx81a1msQB8Xfy1/pub?gid=965041697&single=true&output=csv";
 const urlRankKO = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS2YHMj7nASBNVX0vpYD3P0Uz41gHRsf4D52qu94vfmUX-vZtjN0NV0ONBI6WPWFJx81a1msQB8Xfy1/pub?gid=1416723802&single=true&output=csv";
 const urlPicksKO = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS2YHMj7nASBNVX0vpYD3P0Uz41gHRsf4D52qu94vfmUX-vZtjN0NV0ONBI6WPWFJx81a1msQB8Xfy1/pub?gid=512136379&single=true&output=csv";
-// Goleadores reales/Transfermarkt PENDIENTE.
- // Se Bugea el Arranque: NO reactivar hasta resolver carga externa.
-const urlGoleadoresTransfermarkt = "";
-const urlGoleadoresTransfermarktProxy = "";
+// Goleadores reales desde HC publicada en Google Sheets.
+const urlGoleadores = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS2YHMj7nASBNVX0vpYD3P0Uz41gHRsf4D52qu94vfmUX-vZtjN0NV0ONBI6WPWFJx81a1msQB8Xfy1/pub?gid=407044037&single=true&output=csv";
 
 let partidos = [];
 let usuarios = [];

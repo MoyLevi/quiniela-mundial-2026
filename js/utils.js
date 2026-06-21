@@ -14,6 +14,8 @@ function getFlag(country){
         "austria": "at",
         "belgica": "be",
         "bosnia herzegovina": "ba",
+        "bos": "ba",
+        "bosnia-herzegovina": "ba",
         "brasil": "br",
         "cabo verde": "cv",
         "canada": "ca",
@@ -50,6 +52,8 @@ function getFlag(country){
         "portugal": "pt",
         "qatar": "qa",
         "republica checa": "cz",
+        "che": "cz",
+        "czechia": "cz",
         "senegal": "sn",
         "sudafrica": "za",
         "suecia": "se",
@@ -69,7 +73,7 @@ function getFlag(country){
 
 
 /* =========================================================
-   Helpers Goleador Especial · Ranking Transfermarkt
+   Helpers Goleador Especial · Ranking HC Goleadores
    ========================================================= */
 function normalizarTextoComparacion(valor){
     return (valor || "")
@@ -108,7 +112,6 @@ function crearHTMLGoleadorEspecial(valor, opciones = {}){
     const jugador = buscarGoleadorEnRanking(pick);
 
     /*
-       Goleadores reales/Transfermarkt queda pendiente.
        Si el jugador no existe en el standing real, NO abreviar el pick:
        se muestra exactamente como viene desde la HC Usuarios para no comerse apellidos.
     */
@@ -117,7 +120,7 @@ function crearHTMLGoleadorEspecial(valor, opciones = {}){
     const bandera = pais ? `<img src="${getFlag(pais)}" alt="${pais}" class="flag-mini">` : "";
     const abbr = jugador?.abbr ? ` (${jugador.abbr})` : "";
     const goles = jugador ? jugador.goles : null;
-    const golesTexto = jugador ? `${goles} ${Number(goles) === 1 ? "gol" : "goles"}` : "S/N";
+    const golesTexto = jugador ? `<span class="goleador-goles-real">${goles} ${Number(goles) === 1 ? "gol" : "goles"}</span>` : "";
     const separador = opciones.simboloPuntos ? " · " : " · ";
     const incluirGoles = opciones.incluirGoles !== false && jugador;
 
@@ -183,7 +186,7 @@ function getClaseStatus(status){
 }
 
 function getFooterCopyright(){
-    return `<div class="dev-footer">© Moy · 2026 (v.3.3.7)</div>`;
+    return `<div class="dev-footer">© Moy · 2026 (v.3.3.9)</div>`;
 }
 
 function getPrediccionColectiva(partidoId){

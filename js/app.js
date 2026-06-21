@@ -1,7 +1,10 @@
 btnInicio.addEventListener("click", mostrarInicio);
 btnPartidos.addEventListener("click", () => mostrarPartidos("hoy"));
 btnTabla.addEventListener("click", () => mostrarTabla("principal"));
-btnEstadisticas.addEventListener("click", () => mostrarEstadisticas("campeon"));
+btnEstadisticas.addEventListener("click", () => {
+    if(typeof paginaGoleadoresActual !== "undefined") paginaGoleadoresActual = 1;
+    mostrarEstadisticas("campeon");
+});
 
 async function actualizarDatos(){
 

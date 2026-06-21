@@ -537,10 +537,13 @@ function crearHTMLDetalleRecordUsuarios(tipo){
     const config = {
         exactos: { titulo: "Más marcadores exactos", campo: "exactos", icono: "🎯", ayuda: "Marcadores que valen 3 puntos." },
         ganadores: { titulo: "Más ganadores", campo: "ganadores", icono: "✅", ayuda: "Aciertos de ganador." },
-        diferencias: { titulo: "Más diferencia + ganador", campo: "diferencias", icono: "📐", ayuda: "Aciertos que valen 2 puntos." }
+        diferencias: { titulo: "Más diferencia + ganador", campo: "diferencias", icono: "📐", ayuda: "Aciertos que valen 2 puntos." },
+        exactosKO: { titulo: "Más exactos en Knockout", campo: "marcador", icono: "⚔️", ayuda: "Marcadores exactos en partidos KO." }
     }[tipo];
 
-    const lista = getRankingRecord(tipo);
+    const lista = tipo === "exactosKO"
+        ? (typeof getRankingKO === "function" ? [...getRankingKO()].sort((a,b) => (b.marcador || 0) - (a.marcador || 0) || (b.puntos || 0) - (a.puntos || 0) || a.nombre.localeCompare(b.nombre, "es", {numeric:true})) : [])
+        : getRankingRecord(tipo);
 
     return `
         <button onclick="volverARecordsMarcas()" class="btnVolver">⬅ Volver</button>
@@ -696,7 +699,7 @@ function mostrarDetalleRecord(tipo, pagina = 1, scrollTitulo = false){
         return;
     }
 
-    if(["exactos", "ganadores", "diferencias"].includes(tipo)){
+    if(["exactos", "ganadores", "diferencias", "exactosKO"].includes(tipo)){
         contenido.innerHTML = crearHTMLDetalleRecordUsuarios(tipo);
         return;
     }
@@ -764,7 +767,8 @@ function crearHTMLRecordsTabla(){
                 "⚔️",
                 "Más exactos en Knockout",
                 mejorExactosKO ? `${mejorExactosKO.nombre} · ${mejorExactosKO.marcador || 0}` : "-",
-                "Marcadores exactos en KO"
+                "Toca para ver la tabla completa",
+                "exactosKO"
             )}
 
             ${crearHTMLRecordCard(
@@ -853,7 +857,13 @@ function getCampeonRealKO(){
     return esPorDefinir(campeon) ? "" : campeon;
 }
 
-function getResumenEspecialesUsuario(idUser){
+function partido104FinalizadoPorStatus(){
+    const final = getPartidoGlobalKO(104) || getPartidoKOBase(104);
+    const status = (final?.status || "").toString().trim().toLowerCase();
+    return status.includes("finalizado") || status.includes("finalizada") || status === "final";
+}
+
+function getResumenEspecialesUsuario(idUser, opciones = {}){
     const usuario = usuarios.find(u => Number(u.id) === Number(idUser));
     const campeonReal = getCampeonRealKO();
 
@@ -870,8 +880,10 @@ function getResumenEspecialesUsuario(idUser){
         }
     }
 
-    // Goleador: solo el/los primer lugar(es) del ranking real suman 10 pts.
-    const hayPrimerLugarGoleador = typeof getGoleadoresTopPrimerLugar === "function" && getGoleadoresTopPrimerLugar().length > 0;
+    // Goleador: en General/Recreativa solo suma cuando el partido 104 tiene Status Finalizado.
+    // En Standing Especiales sí se muestra desde antes para consulta independiente.
+    const goleadorActivo = opciones.incluirGoleadorPendiente === true || partido104FinalizadoPorStatus();
+    const hayPrimerLugarGoleador = goleadorActivo && typeof getGoleadoresTopPrimerLugar === "function" && getGoleadoresTopPrimerLugar().length > 0;
     if(hayPrimerLugarGoleador){
         puntosMaximos += 10;
         if(usuario && typeof pickGoleadorEsPrimerLugar === "function" && pickGoleadorEsPrimerLugar(usuario.goleador)){
@@ -958,7 +970,7 @@ function getRankingEspeciales(){
         tercero: u.tercero,
         goleador: u.goleador,
         sorpresa: u.sorpresa,
-        ...getResumenEspecialesUsuario(u.id)
+        ...getResumenEspecialesUsuario(u.id, { incluirGoleadorPendiente: true })
     })).sort((a,b) => b.puntos - a.puntos || a.nombre.localeCompare(b.nombre, "es", {numeric:true}));
 }
 

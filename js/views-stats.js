@@ -186,7 +186,7 @@ function crearHTMLBotonesVistaEspecial(categoria, vistaActiva){
             ${categoria === "goleador" ? `
                 <button
                     class="tab-standing-goleador ${vistaActiva === "standing" ? "tab-activa" : ""}"
-                    onclick="mostrarEstadisticas('${destino}', 'standing', grupoClasificadosActual, true, '${categoria}')"
+                    onclick="mostrarStandingGoleadoresDesdeInicio()"
                 >
                     🏅 Standing
                 </button>
@@ -210,44 +210,65 @@ function ordenarUsuariosPorGoleadorRanking(lista, campo){
 }
 
 function cambiarPaginaGoleadores(delta){
-    const total = Math.max(1, Math.ceil(((Array.isArray(goleadores) && goleadores.length) ? goleadores.length : 25) / 10));
+    const total = Math.max(1, Math.ceil(((Array.isArray(goleadores) && goleadores.length) ? goleadores.length : 0) / 10));
     paginaGoleadoresActual = Math.min(total, Math.max(1, paginaGoleadoresActual + delta));
+    mostrarEstadisticas('podio', 'standing', grupoClasificadosActual, true, 'goleador');
+}
+
+function mostrarStandingGoleadoresDesdeInicio(){
+    paginaGoleadoresActual = 1;
     mostrarEstadisticas('podio', 'standing', grupoClasificadosActual, true, 'goleador');
 }
 
 function crearHTMLStandingGoleador(){
     const listaBase = Array.isArray(goleadores) && goleadores.length
-        ? goleadores.slice(0, 25)
-        : crearGoleadoresFallback();
+        ? goleadores.slice(0, 50)
+        : [];
+
+    if(!listaBase.length){
+        return `
+            <div class="especial-panel goleadores-panel">
+                <h3>Standing Goleadores</h3>
+                <div class="especial-row especial-row-conteo goleador-row">
+                    <span>Sin datos de goleadores por ahora</span>
+                </div>
+            </div>
+        `;
+    }
 
     const totalPaginas = Math.max(1, Math.ceil(listaBase.length / 10));
     paginaGoleadoresActual = Math.min(totalPaginas, Math.max(1, paginaGoleadoresActual || 1));
     const inicio = (paginaGoleadoresActual - 1) * 10;
     const lista = listaBase.slice(inicio, inicio + 10);
 
+    const paginacion = `
+        <div class="goleadores-paginacion">
+            <button onclick="cambiarPaginaGoleadores(-1)" ${paginaGoleadoresActual <= 1 ? "disabled" : ""}>◀</button>
+            <span>Página ${paginaGoleadoresActual} de ${totalPaginas}</span>
+            <button onclick="cambiarPaginaGoleadores(1)" ${paginaGoleadoresActual >= totalPaginas ? "disabled" : ""}>▶</button>
+        </div>
+    `;
+
     return `
         <div class="especial-panel goleadores-panel">
             <h3>Standing Goleadores</h3>
+            <p class="subtexto goleadores-fuente">Goleadores reales (ESPN)</p>
+            ${paginacion}
             ${lista.map(g => {
                 const pais = g.pais || "";
                 const bandera = pais ? `<img src="${getFlag(pais)}" alt="${pais}" class="flag-mini">` : "";
                 const abbr = g.abbr ? ` (${g.abbr})` : "";
-                const nombre = g.nombreCorto || "Por Definir";
-                const golesTexto = g.fallback ? "S/N" : `${g.goles} ${Number(g.goles) === 1 ? "gol" : "goles"}`;
+                const nombre = g.nombreCorto || g.nombre || "";
+                const golesTexto = `${g.goles} ${Number(g.goles) === 1 ? "gol" : "goles"}`;
 
                 return `
                     <div class="especial-row especial-row-conteo goleador-row">
                         <span><strong>${g.pos}</strong> ${nombre} ${bandera}${abbr}</span>
-                        <strong>${golesTexto}</strong>
+                        <strong class="goleador-goles-real">${golesTexto}</strong>
                     </div>
                 `;
             }).join("")}
-
-            <div class="goleadores-paginacion">
-                <button onclick="cambiarPaginaGoleadores(-1)" ${paginaGoleadoresActual <= 1 ? "disabled" : ""}>◀</button>
-                <span>Página ${paginaGoleadoresActual} de ${totalPaginas}</span>
-                <button onclick="cambiarPaginaGoleadores(1)" ${paginaGoleadoresActual >= totalPaginas ? "disabled" : ""}>▶</button>
-            </div>
+            ${paginacion}
         </div>
     `;
 }
@@ -509,7 +530,8 @@ function crearHTMLRecordsStats(){
                 "⚔️",
                 "Más exactos en Knockout",
                 mejorExactosKO ? `${mejorExactosKO.nombre} · ${mejorExactosKO.marcador || 0}` : "-",
-                "Marcadores exactos en KO"
+                "Toca para ver la tabla completa",
+                "exactosKO"
             )}
 
             ${crearHTMLRecordCardStats(
@@ -555,10 +577,13 @@ function crearHTMLDetalleRecordUsuariosStats(tipo){
     const config = {
         exactos: { titulo: "Más marcadores exactos", campo: "exactos", icono: "🎯", ayuda: "Marcadores que valen 3 puntos." },
         ganadores: { titulo: "Más ganadores", campo: "ganadores", icono: "✅", ayuda: "Aciertos de ganador." },
-        diferencias: { titulo: "Más diferencia + ganador", campo: "diferencias", icono: "📐", ayuda: "Aciertos que valen 2 puntos." }
+        diferencias: { titulo: "Más diferencia + ganador", campo: "diferencias", icono: "📐", ayuda: "Aciertos que valen 2 puntos." },
+        exactosKO: { titulo: "Más exactos en Knockout", campo: "marcador", icono: "⚔️", ayuda: "Marcadores exactos en partidos KO." }
     }[tipo];
 
-    const lista = getRankingRecord(tipo);
+    const lista = tipo === "exactosKO"
+        ? (typeof getRankingKO === "function" ? [...getRankingKO()].sort((a,b) => (b.marcador || 0) - (a.marcador || 0) || (b.puntos || 0) - (a.puntos || 0) || a.nombre.localeCompare(b.nombre, "es", {numeric:true})) : [])
+        : getRankingRecord(tipo);
 
     return `
         <button onclick="volverARecordsStats()" class="btnVolver">⬅ Volver</button>
@@ -666,7 +691,7 @@ function mostrarDetalleRecordStats(tipo, pagina = 1, scrollTitulo = false){
         return;
     }
 
-    if(["exactos", "ganadores", "diferencias"].includes(tipo)){
+    if(["exactos", "ganadores", "diferencias", "exactosKO"].includes(tipo)){
         contenido.innerHTML = `
             ${crearHTMLDetalleRecordUsuariosStats(tipo)}
             ${getFooterCopyright()}
