@@ -759,7 +759,7 @@ function crearPartidoBracketHTML(id, extraClass = ""){
     const finalizado = partidoFinalizado(partido);
 
     return `
-        <div class="bracket-match ${finalizado ? "bracket-finalizado" : ""} ${extraClass}" title="${partido.stage} · ${partido.lugar}">
+        <div class="bracket-match ${finalizado ? "bracket-finalizado" : ""} ${extraClass}" data-bracket-id="${partido.id}" title="${partido.stage} · ${partido.lugar}">
             <div class="bracket-meta">
                 <span>${partido.id}</span>
                 <strong>${partido.fecha || ""}</strong>
@@ -775,24 +775,38 @@ function crearPartidoBracketHTML(id, extraClass = ""){
     `;
 }
 
+function crearConectorBracketHTML(tipo){
+    return `
+        <div class="bracket-connector bracket-connector-${tipo}">
+            <span class="connector-line connector-vertical"></span>
+            <span class="connector-line connector-top"></span>
+            <span class="connector-line connector-bottom"></span>
+            <span class="connector-line connector-middle"></span>
+        </div>
+    `;
+}
+
 function crearColumnaBracketHTML(ladoConfig){
     const ladoClase = ladoConfig.lado === "izq" ? "bracket-left" : "bracket-right";
 
     return `
         <div class="bracket-side ${ladoClase}">
+            <div class="bracket-phase-label bracket-label-r32">Fase 32</div>
+            <div class="bracket-phase-label bracket-label-r16">OCTAVOS</div>
+            <div class="bracket-phase-label bracket-label-qf">CUARTOS</div>
             ${ladoConfig.grupos.map((grupo, index) => `
-                <div class="bracket-cluster">
+                <div class="bracket-cluster ${index % 2 === 0 ? "bracket-cluster-pair-start" : "bracket-cluster-pair-end"}">
                     <div class="bracket-round bracket-r32">
                         ${grupo.ronda32.map(id => crearPartidoBracketHTML(id, "bracket-r32-match")).join("")}
                     </div>
 
-                    <div class="bracket-connector bracket-connector-a"></div>
+                    ${crearConectorBracketHTML("a")}
 
                     <div class="bracket-round bracket-r16">
                         ${crearPartidoBracketHTML(grupo.octavos, "bracket-r16-match")}
                     </div>
 
-                    ${index % 2 === 0 ? `<div class="bracket-connector bracket-connector-b"></div>` : ""}
+                    ${index % 2 === 0 ? crearConectorBracketHTML("b") : ""}
 
                     <div class="bracket-round bracket-qf">
                         ${index % 2 === 0 ? crearPartidoBracketHTML(grupo.cuartos, "bracket-qf-match") : ""}
@@ -821,6 +835,7 @@ function crearCentroBracketHTML(){
                 <img src="img/copa-fifa.png" alt="" class="bracket-trophy-img">
             </div>
 
+            <div class="bracket-phase-label bracket-label-semis">SEMIFINALES</div>
             <div class="bracket-semis">
                 ${crearPartidoBracketHTML(101, "bracket-semi-match")}
                 ${crearPartidoBracketHTML(102, "bracket-semi-match")}
@@ -979,6 +994,10 @@ async function exportarBracketImagen(formato = "png"){
         const clone = board.cloneNode(true);
         clone.id = "bracketBoardExportCanvas";
         clone.classList.add("bracket-board-export-canvas");
+        clone.style.width = `${Math.ceil(board.scrollWidth)}px`;
+        clone.style.minWidth = `${Math.ceil(board.scrollWidth)}px`;
+        clone.style.maxWidth = "none";
+        clone.style.transform = "none";
 
         clone.querySelectorAll("img").forEach(img => {
             img.setAttribute("crossorigin", "anonymous");
@@ -988,20 +1007,7 @@ async function exportarBracketImagen(formato = "png"){
         sandbox.appendChild(clone);
         document.body.appendChild(sandbox);
 
-        const trophy = clone.querySelector(".bracket-trophy");
-        const trophyImg = clone.querySelector(".bracket-trophy-img");
-        if(trophy){
-            trophy.style.left = "50%";
-            trophy.style.right = "auto";
-            trophy.style.top = "50%";
-            trophy.style.transform = "translate(-50%, -50%)";
-            trophy.style.margin = "0";
-        }
-        if(trophyImg){
-            trophyImg.style.objectFit = "contain";
-            trophyImg.style.objectPosition = "center center";
-            trophyImg.style.display = "block";
-        }
+        actualizarLineasBracket(clone);
 
         await Promise.all(Array.from(clone.querySelectorAll("img")).map(img => {
             if(img.complete && img.naturalWidth !== 0) return Promise.resolve();
@@ -1011,6 +1017,7 @@ async function exportarBracketImagen(formato = "png"){
             });
         }));
         await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        actualizarLineasBracket(clone);
 
         const exportWidth = Math.ceil(Math.max(clone.scrollWidth, clone.offsetWidth));
         const exportHeight = Math.ceil(Math.max(clone.scrollHeight, clone.offsetHeight));
@@ -1059,6 +1066,8 @@ function crearHTMLBracketVisualBase(){
 
         <div class="bracket-scroll">
             <div class="bracket-board" id="bracketBoardExport">
+                <img src="img/copa-fifa.png" alt="" class="bracket-trophy-bg" loading="eager" crossorigin="anonymous">
+                <svg class="bracket-dynamic-lines" aria-hidden="true"></svg>
                 ${crearColumnaBracketHTML(bracketVisualConfig[0])}
                 ${crearCentroBracketHTML()}
                 ${crearColumnaBracketHTML(bracketVisualConfig[1])}
@@ -1253,6 +1262,114 @@ function crearHTMLEspecial(categoria){
 }
 
 
+
+function actualizarLineasBracket(boardParam = null){
+    const board = boardParam || document.getElementById("bracketBoardExport");
+    if(!board) return;
+
+    const svg = board.querySelector(".bracket-dynamic-lines");
+    if(!svg) return;
+
+    const boardRect = board.getBoundingClientRect();
+    const getMatch = id => board.querySelector(`[data-bracket-id="${id}"]`);
+    const pos = (id, side = "right") => {
+        const el = getMatch(id);
+        if(!el) return null;
+        const r = el.getBoundingClientRect();
+        const y = r.top - boardRect.top + (r.height / 2);
+        if(side === "left") return { x:r.left - boardRect.left, y };
+        if(side === "top") return { x:r.left - boardRect.left + (r.width / 2), y:r.top - boardRect.top };
+        if(side === "bottom") return { x:r.left - boardRect.left + (r.width / 2), y:r.bottom - boardRect.top };
+        return { x:r.right - boardRect.left, y };
+    };
+
+    const w = Math.max(board.scrollWidth, board.offsetWidth, Math.ceil(boardRect.width));
+    const h = Math.max(board.scrollHeight, board.offsetHeight, Math.ceil(boardRect.height));
+    svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+    svg.setAttribute("width", w);
+    svg.setAttribute("height", h);
+    svg.innerHTML = "";
+
+    const mkPath = d => {
+        const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        p.setAttribute("d", d);
+        p.setAttribute("class", "bracket-dynamic-path");
+        svg.appendChild(p);
+    };
+
+    const sideToSide = (from, to, lado) => {
+        const a = pos(from, lado === "left" ? "right" : "left");
+        const b = pos(to, lado === "left" ? "left" : "right");
+        if(!a || !b) return;
+        const dir = lado === "left" ? 1 : -1;
+        const midX = a.x + dir * Math.max(24, Math.abs(b.x - a.x) * .52);
+        mkPath(`M ${a.x} ${a.y} H ${midX} V ${b.y} H ${b.x}`);
+    };
+
+    const joinTwo = (fromA, fromB, to, lado, opciones = {}) => {
+        const sideFrom = lado === "left" ? "right" : "left";
+        const sideTo = lado === "left" ? "left" : "right";
+        const a = pos(fromA, sideFrom);
+        const b = pos(fromB, sideFrom);
+        const c = pos(to, sideTo);
+        if(!a || !b || !c) return;
+        const dir = lado === "left" ? 1 : -1;
+        const distancia = Math.abs(c.x - a.x);
+        const factor = opciones.factorTronco ?? .48;
+        const minTronco = opciones.minTronco ?? 24;
+        const trunkX = a.x + dir * Math.max(minTronco, distancia * factor);
+        const salidaY = opciones.usarYDestino ? c.y : (a.y + b.y) / 2;
+
+        mkPath(`M ${a.x} ${a.y} H ${trunkX} V ${b.y} H ${b.x}`);
+        mkPath(`M ${trunkX} ${salidaY} H ${c.x}`);
+    };
+
+    // Octavos -> Cuartos
+    joinTwo(90, 89, 97, "left");
+    joinTwo(93, 94, 98, "left");
+    joinTwo(91, 92, 99, "right");
+    joinTwo(95, 96, 100, "right");
+
+    // Cuartos -> Semifinales
+    // v3.3.4: solo se recalcula este tramo.
+    // Las rutas 32 -> Octavos y Octavos -> Cuartos quedan intactas.
+    const conectarCuartosASemi = (fromA, fromB, to, lado) => {
+        const sideFrom = lado === "left" ? "right" : "left";
+        const sideTo = lado === "left" ? "left" : "right";
+        const a = pos(fromA, sideFrom);
+        const b = pos(fromB, sideFrom);
+        const c = pos(to, sideTo);
+        if(!a || !b || !c) return;
+
+        const dir = lado === "left" ? 1 : -1;
+        const distancia = Math.abs(c.x - a.x);
+        const trunkX = a.x + dir * Math.max(30, distancia * .46);
+        const y1 = Math.min(a.y, b.y);
+        const y2 = Math.max(a.y, b.y);
+
+        // v3.3.5: sin recovecos.
+        // Mantiene el tramo vertical entre los dos cuartos y sale directo al centro real de la semifinal.
+        // No modifica las rutas 32 -> Octavos ni Octavos -> Cuartos.
+        mkPath(`M ${a.x} ${a.y} H ${trunkX}`);
+        mkPath(`M ${b.x} ${b.y} H ${trunkX}`);
+        mkPath(`M ${trunkX} ${y1} V ${y2}`);
+        mkPath(`M ${trunkX} ${c.y} H ${c.x}`);
+    };
+
+    conectarCuartosASemi(97, 98, 101, "left");
+    conectarCuartosASemi(99, 100, 102, "right");
+
+    // Semifinales -> Final
+    const s1 = pos(101, "bottom");
+    const s2 = pos(102, "bottom");
+    const f = pos(104, "top");
+    if(s1 && s2 && f){
+        const y = Math.min(f.y - 18, Math.max(s1.y, s2.y) + 42);
+        mkPath(`M ${s1.x} ${s1.y} V ${y} H ${f.x} V ${f.y}`);
+        mkPath(`M ${s2.x} ${s2.y} V ${y} H ${f.x}`);
+    }
+}
+
 function centrarBracketVerticalStats(){
     const scroller = document.querySelector(".bracket-scroll");
     if(!scroller) return;
@@ -1299,6 +1416,7 @@ function mostrarEstadisticas(categoriaEspecial = categoriaEspecialActual, vistaE
 
     if(categoriaEspecialActual === "bracket"){
         centrarBracketVerticalStats();
+        actualizarLineasBracket();
     }
 
     if(conservarScroll){
@@ -1309,7 +1427,13 @@ function mostrarEstadisticas(categoriaEspecial = categoriaEspecialActual, vistaE
             });
             if(categoriaEspecialActual === "bracket"){
                 centrarBracketVerticalStats();
+                actualizarLineasBracket();
             }
         });
     }
 }
+
+
+window.addEventListener("resize", () => {
+    if(categoriaEspecialActual === "bracket") actualizarLineasBracket();
+});
