@@ -4007,3 +4007,15 @@
     gap:3px 10px;
     align-items:center;
 }
+
+/* v3.3.8.1 · Goleadores reales ESPN */
+.goleador-goles-real{
+    color:#facc15 !important;
+    font-weight:900;
+}
+.goleadores-fuente{
+    margin-top:-4px;
+    margin-bottom:10px;
+    color:#e2e8f0;
+    font-weight:800;
+}
