@@ -106,14 +106,20 @@ function crearHTMLGoleadorEspecial(valor, opciones = {}){
     if(!pick) return "Sin pick";
 
     const jugador = buscarGoleadorEnRanking(pick);
-    const nombre = jugador?.nombreCorto || (typeof abreviarNombreGoleador === "function" ? abreviarNombreGoleador(pick) : pick);
+
+    /*
+       Goleadores reales/Transfermarkt queda pendiente.
+       Si el jugador no existe en el standing real, NO abreviar el pick:
+       se muestra exactamente como viene desde la HC Usuarios para no comerse apellidos.
+    */
+    const nombre = jugador?.nombreCorto || pick;
     const pais = jugador?.pais || "";
     const bandera = pais ? `<img src="${getFlag(pais)}" alt="${pais}" class="flag-mini">` : "";
     const abbr = jugador?.abbr ? ` (${jugador.abbr})` : "";
     const goles = jugador ? jugador.goles : null;
     const golesTexto = jugador ? `${goles} ${Number(goles) === 1 ? "gol" : "goles"}` : "S/N";
     const separador = opciones.simboloPuntos ? " · " : " · ";
-    const incluirGoles = opciones.incluirGoles !== false;
+    const incluirGoles = opciones.incluirGoles !== false && jugador;
 
     return `<span class="goleador-pick-inline">${nombre} ${bandera}${abbr}${incluirGoles ? `${separador}${golesTexto}` : ""}</span>`;
 }
@@ -177,7 +183,7 @@ function getClaseStatus(status){
 }
 
 function getFooterCopyright(){
-    return `<div class="dev-footer">© Moy · 2026 (v.3.3.5)</div>`;
+    return `<div class="dev-footer">© Moy · 2026 (v.3.3.7)</div>`;
 }
 
 function getPrediccionColectiva(partidoId){

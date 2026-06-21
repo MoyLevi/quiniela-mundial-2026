@@ -432,17 +432,41 @@ function getTablaGrupo(grupo){
         .sort((a,b) => compararEquiposGrupo(a, b, grupo));
 }
 
+function getFormaCronologicaGrupo(equipo){
+    const nombre = normalizarNombreEquipo(equipo?.nombre || equipo);
+    if(!nombre) return [];
+
+    return (Array.isArray(partidos) ? partidos : [])
+        .filter(p => !p.esKO && partidoFinalizado(p))
+        .filter(p =>
+            normalizarNombreEquipo(p.local) === nombre ||
+            normalizarNombreEquipo(p.visita) === nombre
+        )
+        .sort((a,b) => Number(a.id || 0) - Number(b.id || 0))
+        .map(p => {
+            const esLocal = normalizarNombreEquipo(p.local) === nombre;
+            const gf = Number(esLocal ? p.golesLoc : p.golesVis);
+            const gc = Number(esLocal ? p.golesVis : p.golesLoc);
+
+            if(gf > gc) return "win";
+            if(gf < gc) return "loss";
+            return "draw";
+        });
+}
+
 function crearHTMLFormaGrupo(e){
-    const victorias = Math.max(0, Number(e.pg || 0));
-    const empates = Math.max(0, Number(e.pe || 0));
-    const derrotas = Math.max(0, Number(e.pp || 0));
+    const resultados = getFormaCronologicaGrupo(e);
     const jugados = Math.max(0, Number(e.pj || 0));
-    const porJugar = Math.max(0, 3 - jugados);
+    const porJugar = Math.max(0, 3 - Math.max(jugados, resultados.length));
+
+    const clases = {
+        win: '<span class="forma-dot forma-win" title="Victoria"></span>',
+        draw: '<span class="forma-dot forma-draw" title="Empate"></span>',
+        loss: '<span class="forma-dot forma-loss" title="Derrota"></span>'
+    };
 
     const puntos = [
-        ...Array(victorias).fill('<span class="forma-dot forma-win" title="Victoria"></span>'),
-        ...Array(empates).fill('<span class="forma-dot forma-draw" title="Empate"></span>'),
-        ...Array(derrotas).fill('<span class="forma-dot forma-loss" title="Derrota"></span>'),
+        ...resultados.map(r => clases[r] || ""),
         ...Array(porJugar).fill('<span class="forma-pending" title="Por jugar">·</span>')
     ];
 

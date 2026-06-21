@@ -394,18 +394,10 @@ async function fetchTextoGoleadores(url){
 }
 
 async function cargarGoleadores(){
-    const urls = [urlGoleadoresTransfermarkt, urlGoleadoresTransfermarktProxy].filter(Boolean);
-    for(const url of urls){
-        try{
-            const contenido = await fetchTextoGoleadores(url);
-            const lista = parsearGoleadoresTransfermarkt(contenido);
-            if(lista.length){
-                goleadores = lista;
-                return;
-            }
-        }catch(error){
-            console.warn("No se pudo cargar Transfermarkt goleadores desde:", url, error);
-        }
-    }
+    /*
+       Goleadores reales/Transfermarkt PENDIENTE.
+       Se Bugea el Arranque: se elimina la carga externa y se deja el standing en Por Definir.
+       Los picks originales de HC Usuarios siguen apareciendo completos en Conteo General y Picks por Usuario.
+    */
     goleadores = crearGoleadoresFallback();
 }

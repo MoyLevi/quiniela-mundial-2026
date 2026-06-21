@@ -227,7 +227,7 @@ function crearHTMLStandingGoleador(){
 
     return `
         <div class="especial-panel goleadores-panel">
-            <h3>Standing Goleador</h3>
+            <h3>Standing Goleadores</h3>
             ${lista.map(g => {
                 const pais = g.pais || "";
                 const bandera = pais ? `<img src="${getFlag(pais)}" alt="${pais}" class="flag-mini">` : "";
@@ -1331,7 +1331,7 @@ function actualizarLineasBracket(boardParam = null){
     joinTwo(95, 96, 100, "right");
 
     // Cuartos -> Semifinales
-    // v3.3.4: solo se recalcula este tramo.
+    // v3.3.5.1: ajuste específico para la imagen exportada.
     // Las rutas 32 -> Octavos y Octavos -> Cuartos quedan intactas.
     const conectarCuartosASemi = (fromA, fromB, to, lado) => {
         const sideFrom = lado === "left" ? "right" : "left";
@@ -1342,17 +1342,44 @@ function actualizarLineasBracket(boardParam = null){
         if(!a || !b || !c) return;
 
         const dir = lado === "left" ? 1 : -1;
-        const distancia = Math.abs(c.x - a.x);
-        const trunkX = a.x + dir * Math.max(30, distancia * .46);
-        const y1 = Math.min(a.y, b.y);
-        const y2 = Math.max(a.y, b.y);
+        const esExportacion = board.classList.contains("bracket-board-export-canvas");
 
-        // v3.3.5: sin recovecos.
-        // Mantiene el tramo vertical entre los dos cuartos y sale directo al centro real de la semifinal.
-        // No modifica las rutas 32 -> Octavos ni Octavos -> Cuartos.
-        mkPath(`M ${a.x} ${a.y} H ${trunkX}`);
-        mkPath(`M ${b.x} ${b.y} H ${trunkX}`);
-        mkPath(`M ${trunkX} ${y1} V ${y2}`);
+        /*
+         * v3.3.5.6
+         * Exportación: NO se usan offsets artificiales para QF -> SF.
+         * La línea se calcula con el centro real de cada cuadro y termina
+         * exactamente en el borde del cuadro de semifinal. Así no queda
+         * flotando ni desfasada al capturar con html2canvas.
+         */
+        const distancia = Math.abs(c.x - a.x);
+        /*
+         * v3.3.5.7
+         * En la exportación, el tronco QF -> SF debe quedar pegado a
+         * los CUARTOS, no flotando junto a SEMIFINALES. Así imita el
+         * conector de las rondas anteriores: dos salidas cortas desde
+         * cuartos, un tronco vertical limpio, y una sola entrada directa
+         * al centro del cuadro semifinal.
+         */
+        const trunkX = esExportacion
+            ? a.x + dir * 28
+            : a.x + dir * Math.max(26, distancia * .46);
+
+        /*
+         * v3.3.5.8
+         * Ajuste SOLO para exportación: las 4 salidas desde los cuadros
+         * de cuartos hacia el tronco se bajan ligeramente para que entren
+         * visualmente al centro real del cuadro en la imagen generada.
+         * La llegada del tronco a semifinales queda intacta.
+         */
+        const salidaQfOffsetY = esExportacion ? 38 : 0;
+        const ay = a.y + salidaQfOffsetY;
+        const by = b.y + salidaQfOffsetY;
+        const yMin = Math.min(ay, by, c.y);
+        const yMax = Math.max(ay, by, c.y);
+
+        mkPath(`M ${a.x} ${ay} H ${trunkX}`);
+        mkPath(`M ${b.x} ${by} H ${trunkX}`);
+        mkPath(`M ${trunkX} ${yMin} V ${yMax}`);
         mkPath(`M ${trunkX} ${c.y} H ${c.x}`);
     };
 

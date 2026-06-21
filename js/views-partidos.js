@@ -28,26 +28,100 @@ function normalizarTextoFecha(texto){
         .toLowerCase()
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[\u00a0\t\r\n]+/g, " ")
         .replace(/\s+/g, " ")
         .trim();
 }
 
-function fechaAppCoincide(fechaPartido, fechaFiltro){
-    const [dia, mes] = fechaFiltro.split("/");
-    const diaNum = String(Number(dia));
-    const mesNum = String(Number(mes));
+function claveFechaApp(dia, mes, anio = 2026){
+    const d = Number(dia);
+    const m = Number(mes);
+    let y = Number(anio || 2026);
 
-    const meses = {
-        "06": "junio",
-        "07": "julio"
-    };
+    if(!d || !m) return "";
+    if(!y) y = 2026;
+    if(y < 100) y += 2000;
 
-    const texto = normalizarTextoFecha(fechaPartido);
-    const mesTexto = meses[mes];
-
-    return texto.includes(diaNum) && texto.includes(mesTexto);
+    return `${String(d).padStart(2, "0")}/${String(m).padStart(2, "0")}/${y}`;
 }
 
+function obtenerTextoFechaPartido(partidoOFecha){
+    if(partidoOFecha && typeof partidoOFecha === "object"){
+        // OJO: para filtrar por fecha usamos principalmente la columna Fecha.
+        // No conviene leer todo el objeto porque números de marcador/ID pueden contaminar la búsqueda.
+        return partidoOFecha.fecha || partidoOFecha.Fecha || "";
+    }
+
+    return partidoOFecha || "";
+}
+
+function obtenerClaveFechaPartido(partidoOFecha, anioDefault = 2026){
+    const texto = normalizarTextoFecha(obtenerTextoFechaPartido(partidoOFecha));
+    if(!texto) return "";
+
+    const meses = {
+        ene:1, enero:1,
+        feb:2, febrero:2,
+        mar:3, marzo:3,
+        abr:4, abril:4,
+        may:5, mayo:5,
+        jun:6, junio:6,
+        jul:7, julio:7,
+        ago:8, agosto:8,
+        sep:9, sept:9, septiembre:9,
+        oct:10, octubre:10,
+        nov:11, noviembre:11,
+        dic:12, diciembre:12
+    };
+
+    // Formatos: 01/07/2026, 1/7/26, 01-07-2026, 2026-07-01
+    let m = texto.match(/\b(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})\b/);
+    if(m) return claveFechaApp(m[3], m[2], m[1]);
+
+    m = texto.match(/\b(\d{1,2})[\/\-.](\d{1,2})(?:[\/\-.](\d{2,4}))?\b/);
+    if(m) return claveFechaApp(m[1], m[2], m[3] || anioDefault);
+
+    // Formatos: jue 1 julio 2026, 1 de julio, 01 jul. 2026, miércoles 1 de julio de 2026
+    m = texto.match(/\b(\d{1,2})\s*(?:de\s*)?(ene(?:ro)?|feb(?:rero)?|mar(?:zo)?|abr(?:il)?|may(?:o)?|jun(?:io)?|jul(?:io)?|ago(?:sto)?|sep(?:t|tiembre)?|oct(?:ubre)?|nov(?:iembre)?|dic(?:iembre)?)[\.]?(?:\s*(?:de)?\s*(\d{2,4}))?\b/);
+    if(m) return claveFechaApp(m[1], meses[m[2]], m[3] || anioDefault);
+
+    return "";
+}
+
+function fechaAppCoincide(partidoOFecha, fechaFiltro){
+    if(!partidoOFecha || !fechaFiltro) return false;
+
+    const [diaFiltro, mesFiltro, anioFiltro] = fechaFiltro.split("/").map(Number);
+    const claveFiltro = claveFechaApp(diaFiltro, mesFiltro, anioFiltro);
+    const texto = normalizarTextoFecha(obtenerTextoFechaPartido(partidoOFecha));
+    const clavePartido = obtenerClaveFechaPartido(partidoOFecha, anioFiltro);
+
+    if(clavePartido){
+        return clavePartido === claveFiltro;
+    }
+
+    // Compatibilidad con el filtro viejo, pero corregido:
+    // antes hacía texto.includes("1") y por eso 01/julio jalaba 10, 11, 14, 15, 18, etc.
+    const mesesTexto = {
+        1:["enero", "ene"],
+        2:["febrero", "feb"],
+        3:["marzo", "mar"],
+        4:["abril", "abr"],
+        5:["mayo", "may"],
+        6:["junio", "jun"],
+        7:["julio", "jul"],
+        8:["agosto", "ago"],
+        9:["septiembre", "sept", "sep"],
+        10:["octubre", "oct"],
+        11:["noviembre", "nov"],
+        12:["diciembre", "dic"]
+    };
+
+    const diaExacto = new RegExp(`(^|\\D)0?${diaFiltro}(?=\\D|$)`).test(texto);
+    const mesExacto = (mesesTexto[mesFiltro] || []).some(mes => new RegExp(`(^|\\D)${mes}\\.?($|\\D)`).test(texto));
+
+    return diaExacto && mesExacto;
+}
 
 function formatearFechaFiltroBonita(fechaFiltro){
     if(!fechaFiltro) return "Partidos";
@@ -106,7 +180,7 @@ function mostrarPartidos(tipoFiltro = "hoy", valorFiltro = null, panelActivo = n
     let partidosFiltrados = [...partidosVista];
 
     if(tipoFiltro === "fecha" || tipoFiltro === "hoy"){
-        partidosFiltrados = partidosVista.filter(p => fechaAppCoincide(p.fecha, valorFiltro));
+        partidosFiltrados = partidosVista.filter(p => fechaAppCoincide(p, valorFiltro));
     }
 
     if(tipoFiltro === "grupo"){
