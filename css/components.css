@@ -4019,3 +4019,484 @@
     color:#e2e8f0;
     font-weight:800;
 }
+
+
+/* v3.3.10 · Formulario Picks Ronda de 32 */
+.form-picks-home{
+    max-width:620px;
+    margin:10px auto 12px;
+    border-radius:18px;
+    padding:13px 15px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    box-shadow:0 10px 24px rgba(0,0,0,.22);
+    animation:fadeUp .65s ease both;
+}
+.form-picks-home strong,
+.form-picks-home span{
+    display:block;
+}
+.form-picks-home strong{
+    color:#f8fafc;
+    font-size:15px;
+    letter-spacing:.2px;
+}
+.form-picks-home span{
+    color:#d1fae5;
+    font-size:12px;
+    margin-top:3px;
+}
+.form-picks-home-abierto{
+    background:linear-gradient(135deg, rgba(22,163,74,.96), rgba(5,150,105,.88));
+    border:1px solid rgba(134,239,172,.55);
+}
+.form-picks-home-cerrado{
+    justify-content:center;
+    text-align:center;
+    background:linear-gradient(135deg, rgba(30,41,59,.96), rgba(15,23,42,.94));
+    border:1px solid rgba(148,163,184,.30);
+}
+.form-picks-home-cerrado span{
+    color:#fde68a;
+    font-weight:900;
+    text-transform:uppercase;
+    letter-spacing:.9px;
+}
+.form-picks-home button{
+    background:#ffffff;
+    color:#047857;
+    border:none;
+    border-radius:12px;
+    padding:9px 12px;
+    font-weight:900;
+    cursor:pointer;
+    white-space:nowrap;
+    box-shadow:0 8px 18px rgba(0,0,0,.20);
+}
+.form-picks-frame-wrap{
+    max-width:920px;
+    margin:18px auto 20px;
+    border-radius:18px;
+    overflow:hidden;
+    border:1px solid rgba(34,197,94,.45);
+    box-shadow:0 12px 28px rgba(0,0,0,.28);
+    background:#0f172a;
+}
+.form-picks-frame{
+    width:100%;
+    min-height:760px;
+    border:0;
+    display:block;
+    background:#ffffff;
+}
+.form-picks-card{
+    max-width:620px;
+    margin:25px auto;
+    padding:24px;
+    border-radius:18px;
+    text-align:center;
+    background:#1e293b;
+    border:1px solid rgba(250,204,21,.35);
+    box-shadow:0 10px 24px rgba(0,0,0,.22);
+}
+.form-picks-card h2{
+    margin:0 0 8px;
+    color:#fde68a;
+}
+
+/* v3.3.10 · Goleador Especial en una sola línea dentro del detalle por usuario */
+.pick-especial-goleador-una-linea{
+    grid-column:1 / -1;
+}
+.pick-especial-goleador-una-linea > span,
+.pick-especial-goleador-una-linea .goleador-pick-inline{
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    flex-wrap:nowrap !important;
+    gap:5px !important;
+    white-space:nowrap !important;
+    overflow-wrap:normal !important;
+    word-break:normal !important;
+    max-width:100%;
+}
+.pick-especial-goleador-una-linea .flag-mini{
+    flex:0 0 auto;
+    width:23px !important;
+    height:16px !important;
+    object-fit:cover;
+    border-radius:4px;
+}
+
+@media(max-width:600px){
+    .form-picks-home{
+        margin:8px auto 10px;
+        padding:11px 12px;
+        flex-direction:column;
+        text-align:center;
+    }
+    .form-picks-home button{
+        width:100%;
+    }
+    .form-picks-frame{
+        min-height:680px;
+    }
+    .pick-especial-goleador-una-linea > span,
+    .pick-especial-goleador-una-linea .goleador-pick-inline{
+        font-size:13px;
+    }
+}
+
+
+/* v3.3.11 · Ajustes Picks Especiales e Inicio */
+.picks-especiales-usuario.picks-especiales-grid-compacto{
+    max-width:980px;
+    margin:20px auto 25px;
+    display:grid;
+    grid-template-columns:repeat(5, minmax(150px, 1fr));
+    justify-content:center;
+    align-items:stretch;
+    gap:12px;
+}
+.picks-especiales-grid-compacto .pick-especial-usuario-card,
+.picks-especiales-grid-compacto .pick-especial-largo,
+.picks-especiales-grid-compacto .pick-especial-goleador-una-linea{
+    grid-column:auto !important;
+    min-height:74px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+}
+.picks-especiales-grid-compacto .pick-especial-usuario-card span{
+    max-width:100%;
+}
+.pick-especial-goleador-una-linea > span,
+.pick-especial-goleador-una-linea .goleador-pick-inline{
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    flex-wrap:nowrap !important;
+    gap:4px !important;
+    white-space:nowrap !important;
+    overflow-wrap:normal !important;
+    word-break:normal !important;
+    max-width:100%;
+    font-size:14px;
+}
+.pick-especial-goleador-una-linea .goleador-goles-real{
+    white-space:nowrap !important;
+}
+
+.acciones-inicio-compactas .btn-leeme,
+.acciones-inicio-compactas .btn-premios,
+.acciones-inicio-compactas .btn-comparte{
+    background:#1e293b !important;
+    color:#fff !important;
+    box-shadow:none !important;
+}
+.acciones-inicio-compactas .btn-leeme{
+    border:1px solid #ef4444 !important;
+}
+.acciones-inicio-compactas .btn-premios{
+    border:1px solid #facc15 !important;
+}
+.acciones-inicio-compactas .btn-comparte{
+    border:1px solid #fb923c !important;
+}
+.acciones-inicio-compactas .btn-leeme:hover,
+.acciones-inicio-compactas .btn-premios:hover,
+.acciones-inicio-compactas .btn-comparte:hover{
+    background:#263449 !important;
+    transform:translateY(-1px);
+}
+
+@media(max-width:900px){
+    .picks-especiales-usuario.picks-especiales-grid-compacto{
+        max-width:520px;
+        grid-template-columns:repeat(2, minmax(160px, 1fr));
+    }
+}
+@media(max-width:560px){
+    .picks-especiales-usuario.picks-especiales-grid-compacto{
+        max-width:330px;
+        grid-template-columns:1fr;
+    }
+    .pick-especial-goleador-una-linea > span,
+    .pick-especial-goleador-una-linea .goleador-pick-inline{
+        font-size:13px;
+    }
+}
+
+
+/* v3.3.12 · Ajuste fino: Picks Especiales responsivos, goleador en 2 líneas si trae goles */
+.picks-especiales-usuario.picks-especiales-grid-compacto{
+    max-width:1080px;
+    grid-template-columns:repeat(5, minmax(178px, 188px));
+    justify-content:center;
+    place-content:center;
+}
+.picks-especiales-grid-compacto .pick-especial-usuario-card,
+.picks-especiales-grid-compacto .pick-especial-largo,
+.picks-especiales-grid-compacto .pick-especial-goleador-una-linea{
+    width:100%;
+    box-sizing:border-box;
+    padding:14px 12px;
+    overflow:hidden;
+}
+.pick-especial-goleador-una-linea > span{
+    width:100%;
+}
+.pick-especial-goleador-una-linea .goleador-pick-inline.goleador-pick-dos-lineas{
+    display:flex !important;
+    width:100%;
+    flex-direction:column !important;
+    align-items:center !important;
+    justify-content:center !important;
+    gap:2px !important;
+    white-space:normal !important;
+    line-height:1.18;
+}
+.pick-especial-goleador-una-linea .goleador-pick-nombre,
+.pick-especial-goleador-una-linea .goleador-pick-goles{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:4px;
+    max-width:100%;
+    white-space:nowrap;
+    text-align:center;
+}
+.pick-especial-goleador-una-linea .goleador-pick-nombre{
+    font-size:14px;
+}
+.pick-especial-goleador-una-linea .goleador-pick-goles{
+    font-size:13px;
+}
+
+@media(max-width:980px){
+    .picks-especiales-usuario.picks-especiales-grid-compacto{
+        max-width:620px;
+        grid-template-columns:repeat(2, minmax(178px, 188px));
+    }
+}
+@media(max-width:480px){
+    .picks-especiales-usuario.picks-especiales-grid-compacto{
+        max-width:310px;
+        grid-template-columns:minmax(220px, 280px);
+    }
+    .pick-especial-goleador-una-linea .goleador-pick-nombre{
+        font-size:13px;
+    }
+}
+
+
+/* v3.4.1 · Inicio: acceso a Form Picks compacto debajo del título */
+.form-picks-home{
+    max-width:320px !important;
+    margin:8px auto 12px !important;
+    padding:10px 14px !important;
+    min-height:42px !important;
+    border-radius:14px !important;
+    justify-content:center !important;
+    text-align:center !important;
+    gap:4px !important;
+}
+.form-picks-home strong{
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    gap:7px !important;
+    font-size:15px !important;
+    line-height:1.15 !important;
+}
+.form-picks-home span{
+    font-size:11px !important;
+    margin-top:2px !important;
+}
+.form-picks-home-abierto{
+    cursor:pointer;
+    background:linear-gradient(135deg, rgba(22,163,74,.94), rgba(5,150,105,.86)) !important;
+    border:1px solid rgba(134,239,172,.56) !important;
+    box-shadow:0 8px 18px rgba(0,0,0,.20) !important;
+}
+.form-picks-home-clickable:hover{
+    transform:translateY(-1px);
+    filter:brightness(1.06);
+}
+.form-picks-home-cerrado{
+    flex-direction:column !important;
+}
+.form-picks-icono-trionda{
+    width:20px !important;
+    height:20px !important;
+    object-fit:contain !important;
+    display:inline-block !important;
+    flex:0 0 auto !important;
+}
+.acciones-inicio-compactas .btn-refresh.btn-refresh-compacto{
+    background:#2563eb !important;
+    border:1px solid rgba(125,211,252,.55) !important;
+    color:#ffffff !important;
+    box-shadow:none !important;
+}
+.acciones-inicio-compactas .btn-refresh.btn-refresh-compacto:hover{
+    background:#3b82f6 !important;
+    transform:translateY(-1px);
+}
+
+@media(max-width:600px){
+    .form-picks-home{
+        max-width:280px !important;
+        padding:9px 12px !important;
+        margin:7px auto 10px !important;
+    }
+    .form-picks-home strong{
+        font-size:14px !important;
+    }
+    .form-picks-icono-trionda{
+        width:19px !important;
+        height:19px !important;
+    }
+}
+
+/* v3.4.2 · Ajuste fino Inicio: Form Picks más compacto y Actualiza igual fondo que Comparte */
+.form-picks-home.form-picks-home-abierto{
+    max-width:245px !important;
+    min-height:46px !important;
+    padding:9px 16px !important;
+    border-radius:13px !important;
+}
+.form-picks-home.form-picks-home-abierto strong{
+    font-size:14px !important;
+    white-space:nowrap !important;
+}
+.acciones-inicio-compactas .btn-refresh.btn-refresh-compacto{
+    background:#1e293b !important;
+    border:1px solid #3b82f6 !important;
+    color:#ffffff !important;
+    box-shadow:none !important;
+}
+.acciones-inicio-compactas .btn-refresh.btn-refresh-compacto:hover{
+    background:#263449 !important;
+    transform:translateY(-1px);
+}
+
+@media(max-width:600px){
+    .form-picks-home.form-picks-home-abierto{
+        max-width:220px !important;
+        min-height:44px !important;
+        padding:9px 13px !important;
+    }
+    .form-picks-home.form-picks-home-abierto strong{
+        font-size:13px !important;
+    }
+}
+
+
+/* v3.4.3 Form Picks compact */
+.form-picks-home-abierto{
+  display:inline-flex !important;
+  align-items:center;
+  justify-content:center;
+  min-height:44px !important;
+  height:44px !important;
+  padding:8px 16px !important;
+  width:auto !important;
+  max-width:240px !important;
+  margin:10px auto 12px auto !important;
+  border-radius:12px !important;
+}
+.form-picks-home-abierto strong{
+  font-size:.95rem !important;
+}
+
+
+/* v3.4.4 · Corrección centrado y diseño acceso Form Picks */
+.form-picks-home.form-picks-home-abierto{
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    width:100% !important;
+    max-width:300px !important;
+    min-height:58px !important;
+    height:auto !important;
+    margin:8px auto 14px !important;
+    padding:9px 16px !important;
+    box-sizing:border-box !important;
+    border-radius:12px !important;
+    background:#16c55f !important;
+    background-image:none !important;
+    border:1px solid #86efac !important;
+    box-shadow:0 8px 18px rgba(0,0,0,.20) !important;
+    text-align:left !important;
+}
+.form-picks-home.form-picks-home-abierto .form-picks-abierto-contenido{
+    width:100% !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    gap:9px !important;
+}
+.form-picks-home.form-picks-home-abierto .form-picks-abierto-icono{
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    flex:0 0 auto !important;
+    width:28px !important;
+    height:28px !important;
+    border-radius:50% !important;
+    background:#0f172a !important;
+    color:#ffffff !important;
+    font-size:16px !important;
+    line-height:1 !important;
+}
+.form-picks-home.form-picks-home-abierto .form-picks-abierto-textos{
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:flex-start !important;
+    justify-content:center !important;
+    line-height:1.12 !important;
+}
+.form-picks-home.form-picks-home-abierto strong{
+    display:block !important;
+    font-size:14px !important;
+    line-height:1.12 !important;
+    white-space:nowrap !important;
+    margin:0 !important;
+}
+.form-picks-home.form-picks-home-abierto span:not(.form-picks-abierto-icono){
+    display:block !important;
+    margin:4px 0 0 !important;
+    color:#ecfdf5 !important;
+    font-size:12px !important;
+    font-weight:400 !important;
+    letter-spacing:.1px !important;
+    text-transform:none !important;
+    white-space:nowrap !important;
+}
+.form-picks-home.form-picks-home-clickable:hover{
+    transform:translateY(-1px) !important;
+    filter:brightness(1.05) !important;
+}
+@media(max-width:600px){
+    .form-picks-home.form-picks-home-abierto{
+        max-width:285px !important;
+        min-height:56px !important;
+        margin:7px auto 12px !important;
+        padding:9px 14px !important;
+    }
+    .form-picks-home.form-picks-home-abierto .form-picks-abierto-icono{
+        width:26px !important;
+        height:26px !important;
+        font-size:15px !important;
+    }
+    .form-picks-home.form-picks-home-abierto strong{
+        font-size:13px !important;
+    }
+    .form-picks-home.form-picks-home-abierto span:not(.form-picks-abierto-icono){
+        font-size:11px !important;
+    }
+}
