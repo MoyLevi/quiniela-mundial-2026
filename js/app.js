@@ -28,6 +28,9 @@ async function actualizarDatos(){
         await cargarKnockout();
         await cargarRankKO();
         await cargarPicksKO();
+        if(typeof cargarForm === "function"){
+            await cargarForm();
+        }
         if(typeof cargarGoleadores === "function"){
             await cargarGoleadores();
         }
@@ -68,6 +71,9 @@ async function iniciarApp(){
         await cargarKnockout();
         await cargarRankKO();
         await cargarPicksKO();
+        if(typeof cargarForm === "function"){
+            await cargarForm();
+        }
         if(typeof cargarGoleadores === "function"){
             await cargarGoleadores();
         }

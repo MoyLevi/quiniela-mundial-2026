@@ -1271,9 +1271,9 @@ function crearHTMLPicksEspecialesUsuario(usuario){
                 <span>${getTextoEspecial(usuario?.tercero)}</span>
             </div>
 
-            <div class="pick-especial-usuario-card pick-especial-largo">
+            <div class="pick-especial-usuario-card pick-especial-largo pick-especial-goleador-una-linea">
                 <strong>⚽ Goleador</strong>
-                <span>${crearHTMLGoleadorEspecial(usuario?.goleador, { simboloPuntos:true })}</span>
+                <span>${crearHTMLGoleadorEspecial(usuario?.goleador, { simboloPuntos:true, golesEnLineaNueva:true })}</span>
             </div>
 
             <div class="pick-especial-usuario-card pick-especial-largo">

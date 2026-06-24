@@ -121,10 +121,13 @@ function crearHTMLGoleadorEspecial(valor, opciones = {}){
     const abbr = jugador?.abbr ? ` (${jugador.abbr})` : "";
     const goles = jugador ? jugador.goles : null;
     const golesTexto = jugador ? `<span class="goleador-goles-real">${goles} ${Number(goles) === 1 ? "gol" : "goles"}</span>` : "";
-    const separador = opciones.simboloPuntos ? " · " : " · ";
     const incluirGoles = opciones.incluirGoles !== false && jugador;
 
-    return `<span class="goleador-pick-inline">${nombre} ${bandera}${abbr}${incluirGoles ? `${separador}${golesTexto}` : ""}</span>`;
+    if(opciones.golesEnLineaNueva && incluirGoles){
+        return `<span class="goleador-pick-inline goleador-pick-dos-lineas"><span class="goleador-pick-nombre">${nombre} ${bandera}${abbr}</span><span class="goleador-pick-goles">· ${golesTexto}</span></span>`;
+    }
+
+    return `<span class="goleador-pick-inline">${nombre} ${bandera}${abbr}${incluirGoles ? ` · ${golesTexto}` : ""}</span>`;
 }
 
 function getGoleadoresTopPrimerLugar(){
@@ -186,7 +189,7 @@ function getClaseStatus(status){
 }
 
 function getFooterCopyright(){
-    return `<div class="dev-footer">© Moy · 2026 (v.3.3.9)</div>`;
+    return `<div class="dev-footer">© Moy · 2026 (v.3.4.5)</div>`;
 }
 
 function getPrediccionColectiva(partidoId){

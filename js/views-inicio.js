@@ -1,3 +1,63 @@
+
+function crearHTMLAccesoFormularioPicks(){
+    const abierto = formPicksAbierto === true;
+
+    if(abierto){
+        return `
+            <div class="form-picks-home form-picks-home-abierto form-picks-home-clickable" onclick="mostrarFormularioPicks()" role="button" tabindex="0" onkeydown="if(event.key==='Enter' || event.key===' '){ event.preventDefault(); mostrarFormularioPicks(); }">
+                <div class="form-picks-abierto-contenido">
+                    <span class="form-picks-abierto-icono" aria-hidden="true">✍️</span>
+                    <div class="form-picks-abierto-textos">
+                        <strong>Picks Ronda de 32</strong>
+                        <span>Captura y Modifica</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    return `
+        <div class="form-picks-home form-picks-home-cerrado">
+            <strong><img class="form-picks-icono-trionda" src="img/trionda.png" alt=""> Picks Ronda de 32</strong>
+            <span>Regresa Pronto</span>
+        </div>
+    `;
+}
+
+function mostrarFormularioPicks(){
+    if(formPicksAbierto !== true){
+        contenido.innerHTML = `
+            <button onclick="mostrarInicio()" class="btnVolver">⬅ Regresar</button>
+            <h1>PICKS <span class="titulo-acento">RONDA DE 32</span></h1>
+            <div class="form-picks-card form-picks-cerrado">
+                <h2>Regresa Pronto</h2>
+                <p>El formulario todavía no está abierto.</p>
+            </div>
+            ${getFooterCopyright()}
+        `;
+        return;
+    }
+
+    contenido.innerHTML = `
+        <button onclick="mostrarInicio()" class="btnVolver">⬅ Regresar</button>
+        <h1>PICKS <span class="titulo-acento">RONDA DE 32</span></h1>
+        <p class="subtexto">Captura o modifica tus picks desde el formulario oficial.</p>
+
+        <div class="form-picks-frame-wrap">
+            <iframe
+                class="form-picks-frame"
+                src="${urlFormularioPicks}"
+                title="Formulario Picks Ronda de 32"
+                loading="lazy"
+            ></iframe>
+        </div>
+
+        ${getFooterCopyright()}
+    `;
+
+    window.scrollTo({ top:0, behavior:"smooth" });
+}
+
 function mostrarInicio(){
 
     const ranking = typeof getRankingGeneralCompleto === "function" ? getRankingGeneralCompleto() : getRanking();
@@ -23,10 +83,12 @@ function mostrarInicio(){
 
         <h1>QUINIELA <span class="titulo-acento">MUNDIAL 2026</span></h1>
 
+        ${crearHTMLAccesoFormularioPicks()}
+
         <div class="acciones-inicio-compactas">
-            <button class="btn-leeme" onclick="mostrarLeeme()">Leéme</button>
+            <button class="btn-leeme" onclick="mostrarLeeme()">Avisos</button>
             <button class="btn-premios" onclick="mostrarReglasPremios()">Premios</button>
-            <button onclick="compartirApp()">Compartir</button>
+            <button class="btn-comparte" onclick="compartirApp()">Comparte</button>
             <button class="btn-refresh btn-refresh-compacto" onclick="actualizarDatos()">Actualiza</button>
         </div>
 

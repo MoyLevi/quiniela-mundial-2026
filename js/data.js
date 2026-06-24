@@ -247,6 +247,36 @@ async function cargarPicksKO(){
     });
 }
 
+
+async function cargarForm(){
+    formPicksAbierto = false;
+
+    try{
+        if(typeof urlForm !== "string" || !urlForm){
+            return;
+        }
+
+        const res = await fetch(urlForm, { cache: "no-store" });
+        if(!res.ok) throw new Error(`Form ${res.status}`);
+
+        const text = await res.text();
+        const data = parseCSV(text);
+
+        // Estructura esperada:
+        // Abrir Formulario
+        // NO / SI
+        const valorDirecto = (data?.[1]?.[0] || "").toString().trim().toLowerCase();
+        const valorFlexible = data.flat().find(c => /^(si|sí|no)$/i.test((c || "").toString().trim())) || "";
+        const valor = valorDirecto || valorFlexible.toString().trim().toLowerCase();
+
+        formPicksAbierto = valor === "si" || valor === "sí";
+    }
+    catch(error){
+        console.warn("No se pudo cargar configuración Form:", error);
+        formPicksAbierto = false;
+    }
+}
+
 /* =========================================================
    GOLEADORES · HC publicada en Google Sheets
    ---------------------------------------------------------
