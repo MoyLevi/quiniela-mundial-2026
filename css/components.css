@@ -4500,3 +4500,158 @@
         font-size:11px !important;
     }
 }
+
+
+/* =========================================================
+   Videos en detalle del partido · v3.5.7
+   No modifica controles de Partidos Filtrados.
+   ========================================================= */
+.videos-partido{
+    width:min(640px, 92%);
+    margin:20px auto 24px;
+    text-align:left;
+}
+
+.videos-partido h2{
+    text-align:center;
+    margin:0 0 12px;
+}
+
+.videos-grid{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:14px;
+}
+
+.video-card{
+    position:relative;
+    display:block;
+    width:100%;
+    aspect-ratio:16 / 9;
+    min-height:230px;
+    border-radius:22px;
+    overflow:hidden;
+    background:rgba(15,23,42,.92);
+    border:1px solid rgba(255,255,255,.13);
+    color:#fff;
+    text-decoration:none;
+    box-shadow:0 12px 28px rgba(0,0,0,.22);
+    transition:transform .18s ease, filter .18s ease, border-color .18s ease;
+    cursor:pointer;
+}
+
+.video-card:hover{
+    transform:translateY(-1px);
+    filter:brightness(1.07);
+    border-color:rgba(255,255,255,.25);
+}
+
+.video-card *{
+    pointer-events:none;
+}
+
+.video-thumb{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    border-radius:inherit;
+    overflow:hidden;
+    background:linear-gradient(135deg, rgba(255,0,0,.72), rgba(15,23,42,.96));
+}
+
+.video-thumb img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+}
+
+.video-thumb::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:linear-gradient(180deg, rgba(0,0,0,.05) 0%, rgba(0,0,0,.18) 45%, rgba(0,0,0,.78) 100%);
+    pointer-events:none;
+}
+
+.video-play{
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%, -50%);
+    z-index:2;
+    width:52px;
+    height:52px;
+    border-radius:999px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#ff0033;
+    color:#fff;
+    font-size:22px;
+    font-weight:900;
+    box-shadow:0 10px 24px rgba(0,0,0,.36);
+}
+
+.video-info{
+    position:absolute;
+    left:0;
+    right:0;
+    bottom:0;
+    z-index:3;
+    display:flex;
+    flex-direction:column;
+    gap:3px;
+    min-width:0;
+    padding:14px 16px 15px;
+}
+
+.video-info strong{
+    font-size:1.05rem;
+    line-height:1.1;
+    font-weight:900;
+}
+
+.video-info span,
+.video-info small{
+    color:#dbe7f6;
+    font-size:.82rem;
+    line-height:1.15;
+}
+
+.video-info small{
+    color:#38bdf8;
+    font-weight:900;
+}
+
+@media (max-width:520px){
+    .videos-partido{
+        width:94%;
+        margin:16px auto 22px;
+    }
+
+    .video-card{
+        min-height:0;
+        border-radius:18px;
+    }
+
+    .video-play{
+        width:44px;
+        height:44px;
+        font-size:19px;
+    }
+
+    .video-info{
+        padding:11px 13px 12px;
+    }
+
+    .video-info strong{
+        font-size:.95rem;
+    }
+
+    .video-info span,
+    .video-info small{
+        font-size:.76rem;
+    }
+}
