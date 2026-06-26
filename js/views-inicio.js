@@ -237,7 +237,12 @@ Bueno aqui sigo, me falta desarrollar los Standings de los Goleadores, e integra
         fecha: "19.Junio.2026 06:22pm",
         titulo: "Picks de Ronda 32",
         texto: `En este espacio les explicaré cómo registrar o modificar sus picks para la <b>Ronda de 32.</b> ¡Esténse atentos!`
-    }
+    },
+    {
+        fecha: "26.Junio.2026 04:58pm",
+        titulo: "Highlights",
+        texto: `Se agregó un breve resumen en video de aproximadamente **5 minutos** para cada partido, ideal para quienes no pudieron verlo en vivo.`
+    }    
 ];
 
 function crearHTMLMensajeLeeme(){
