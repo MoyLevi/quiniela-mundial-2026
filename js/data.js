@@ -435,3 +435,142 @@ async function cargarGoleadores(){
     }
 }
 
+
+
+/* =========================================================
+   VIDEOS · resúmenes oficiales por partido
+   Tabla flexible: IDPartido | Titulo | URL | Thumbnail | Fuente
+   ========================================================= */
+function obtenerIdYouTube(url){
+    const texto = (url || "").toString().trim();
+    if(!texto) return "";
+
+    const patrones = [
+        /youtu\.be\/([a-zA-Z0-9_-]{6,})/,
+        /youtube\.com\/watch\?[^\s]*v=([a-zA-Z0-9_-]{6,})/,
+        /youtube\.com\/embed\/([a-zA-Z0-9_-]{6,})/,
+        /youtube-nocookie\.com\/embed\/([a-zA-Z0-9_-]{6,})/,
+        /shorts\/([a-zA-Z0-9_-]{6,})/
+    ];
+
+    for(const patron of patrones){
+        const m = texto.match(patron);
+        if(m) return m[1];
+    }
+    return "";
+}
+
+function normalizarUrlVideo(url){
+    const texto = (url || "").toString().trim();
+    if(!texto) return "";
+    const idYT = obtenerIdYouTube(texto);
+    if(idYT) return `https://youtu.be/${idYT}`;
+    return texto;
+}
+
+function getMiniaturaVideo(url, miniatura = ""){
+    const img = (miniatura || "").toString().trim();
+    if(img) return img;
+    const idYT = obtenerIdYouTube(url);
+    if(idYT) return `https://i.ytimg.com/vi/${idYT}/hqdefault.jpg`;
+    return "";
+}
+
+function normalizarHeaderVideo(header){
+    return (header || "")
+        .toString()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, "");
+}
+
+function valorVideo(obj, nombres){
+    for(const nombre of nombres){
+        const key = normalizarHeaderVideo(nombre);
+        if(obj[key] !== undefined && obj[key] !== "") return obj[key];
+    }
+    return "";
+}
+
+function parsearVideosCSV(texto){
+    const data = parseCSV(texto || "");
+    if(!data.length) return [];
+
+    const headers = data[0].map(h => normalizarHeaderVideo(h));
+
+    return data.slice(1).map((r, index) => {
+        const obj = {};
+        headers.forEach((h, i) => { obj[h] = (r[i] || "").toString().trim(); });
+
+        const idPartido = Number(valorVideo(obj, [
+            "IDPartido", "IdPartido", "PartidoID", "ID Partido", "Partido", "ID"
+        ]));
+
+        const url = normalizarUrlVideo(valorVideo(obj, [
+            "URL", "Url", "Liga", "Link", "Enlace", "Video", "YouTube", "Youtube", "Resumen"
+        ]));
+
+        if(!Number.isFinite(idPartido) || !idPartido || !url) return null;
+
+        const titulo = valorVideo(obj, ["Titulo", "Título", "Nombre", "Descripcion", "Descripción"]) || "Resumen oficial";
+        const fuente = valorVideo(obj, ["Fuente", "Sitio", "Canal"]) || "Video externo";
+        const miniatura = getMiniaturaVideo(url, valorVideo(obj, ["Thumbnail", "Miniatura", "Imagen"]));
+
+        return {
+            idVideo: Number(valorVideo(obj, ["IDVideo", "IdVideo"]) || index + 1),
+            partidoId: idPartido,
+            titulo,
+            fuente,
+            url,
+            miniatura
+        };
+    }).filter(Boolean);
+}
+
+async function cargarVideos(){
+    try{
+        if(typeof urlVideos !== "string" || !urlVideos){
+            videos = [];
+            return;
+        }
+        const res = await fetch(urlVideos, { cache: "no-store" });
+        if(!res.ok) throw new Error(`Videos ${res.status}`);
+        const text = await res.text();
+        videos = parsearVideosCSV(text);
+    }
+    catch(error){
+        console.warn("No se pudieron cargar videos:", error);
+        videos = [];
+    }
+}
+
+function getVideosPartido(idPartido){
+    return (videos || []).filter(v => Number(v.partidoId) === Number(idPartido));
+}
+
+function getHTMLVideosPartido(idPartido){
+    const listaVideos = getVideosPartido(idPartido);
+    if(!listaVideos.length) return "";
+
+    return `
+        <section class="videos-partido" aria-label="Videos del partido">
+            <h2>RESUMEN <span class="titulo-acento">OFICIAL</span></h2>
+            <div class="videos-grid">
+                ${listaVideos.map(video => `
+                    <a class="video-card" href="${video.url}" target="_blank" rel="noopener noreferrer" aria-label="Ver ${video.titulo}">
+                        <div class="video-thumb ${video.miniatura ? "" : "video-thumb-fallback"}">
+                            ${video.miniatura ? `<img src="${video.miniatura}" alt="Miniatura de ${video.titulo}" loading="lazy">` : ""}
+                            <span class="video-play">▶</span>
+                        </div>
+                        <div class="video-info">
+                            <strong>Highlights</strong>
+                            <span>${video.fuente}</span>
+                            <small>Se abrirá en YouTube</small>
+                        </div>
+                    </a>
+                `).join("")}
+            </div>
+        </section>
+    `;
+}

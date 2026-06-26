@@ -271,6 +271,8 @@ function cambiarMensajeLeeme(delta){
 
 function mostrarLeeme(){
 
+    leemeMensajeActual = Math.max((mensajesLeeme || []).length - 1, 0);
+
     contenido.innerHTML = `
         <button onclick="mostrarInicio()" class="btnVolver">⬅ Regresar</button>
 

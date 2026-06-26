@@ -34,6 +34,9 @@ async function actualizarDatos(){
         if(typeof cargarGoleadores === "function"){
             await cargarGoleadores();
         }
+        if(typeof cargarVideos === "function"){
+            await cargarVideos();
+        }
 
         if(typeof precalcularRankings === "function"){
             precalcularRankings();
@@ -76,6 +79,9 @@ async function iniciarApp(){
         }
         if(typeof cargarGoleadores === "function"){
             await cargarGoleadores();
+        }
+        if(typeof cargarVideos === "function"){
+            await cargarVideos();
         }
 
         if(typeof precalcularRankings === "function"){

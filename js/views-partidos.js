@@ -399,6 +399,8 @@ function verPartido(id){
         <p class="info-partido">${p.fecha} · ${p.hora} · ${p.lugar}</p>
         ${p.esKO ? `<p class="info-partido pasa-detalle">Gana: ${crearHTMLPaisConBandera(p.pasa || getEquipoPasaPartido(p))}</p>` : ""}
 
+        ${typeof getHTMLVideosPartido === "function" ? getHTMLVideosPartido(id) : ""}
+
         <div class="prediccion-colectiva">
             ${p.esKO ? getPrediccionColectivaKO(id) : getPrediccionColectiva(id)}
         </div>
