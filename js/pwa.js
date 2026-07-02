@@ -1,11 +1,18 @@
 (() => {
-  const APP_VERSION = "4.1.5";
+  const APP_VERSION = "4.2.8";
   const VERSION_URL = `./version.json?ts=${Date.now()}`;
   const INSTALL_HELP_KEY = "quiniela-pwa-install-help-dismissed";
   const NOTIFICATION_KEY = "quiniela-pwa-local-notifications-enabled";
   const NOTIFIED_MATCHES_KEY = "quiniela-pwa-notified-matches";
-  const UPDATE_RELOAD_KEY = "quiniela-pwa-update-reload-v4.1.5";
+  const NOTIFICATION_PROMPT_DISMISSED_KEY = "quiniela-pwa-notification-prompt-dismissed";
+  const POST_UPDATE_NOTIFY_PROMPT_KEY = "quiniela-pwa-show-notifications-after-update";
+  const UPDATE_RELOAD_KEY = "quiniela-pwa-update-reload-v4.2.8";
   const UPDATE_DISMISSED_VERSION_KEY = "quiniela-pwa-update-dismissed-version";
+  const UPDATE_APPLIED_VERSION_KEY = "quiniela-pwa-update-applied-version";
+  const PWA_MIGRATION_KEY = "quiniela-pwa-migration-v4.2.8";
+  const FCM_TOKEN_KEY = "quiniela-fcm-token";
+  const FCM_TOKEN_CONFIRMED_VERSION_KEY = "quiniela-fcm-token-confirmed-version";
+  const FCM_REGISTERING_KEY = "quiniela-fcm-registering";
 
   let deferredInstallPrompt = null;
   let swRegistration = null;
@@ -69,15 +76,11 @@
     document.body.appendChild(panel);
 
     document.getElementById("pwaCloseBtn")?.addEventListener("click", () => {
-      dismissVisibleUpdate();
+      dismissVisiblePanel();
       hidePanel();
     });
     document.getElementById("pwaLaterBtn")?.addEventListener("click", () => {
-      if (activePanelMode === "update") {
-        dismissVisibleUpdate();
-      } else {
-        localStorage.setItem(INSTALL_HELP_KEY, "1");
-      }
+      dismissVisiblePanel();
       hidePanel();
     });
     document.getElementById("pwaInstallBtn")?.addEventListener("click", installApp);
@@ -97,8 +100,23 @@
 
     document.getElementById("pwaInstallBtn")?.classList.toggle("pwa-hidden", mode !== "install" || !deferredInstallPrompt);
     document.getElementById("pwaUpdateBtn")?.classList.toggle("pwa-hidden", mode !== "update");
+    document.getElementById("pwaNotifyBtn")?.classList.toggle("pwa-hidden", mode !== "notify");
     document.getElementById("pwaIosHelp")?.classList.toggle("pwa-hidden", !iosHelp);
     document.getElementById("pwaPanel")?.classList.remove("pwa-hidden");
+  }
+
+  function dismissVisiblePanel() {
+    if (activePanelMode === "update" && activeUpdateVersion) {
+      sessionStorage.setItem(UPDATE_DISMISSED_VERSION_KEY, activeUpdateVersion);
+      return;
+    }
+
+    if (activePanelMode === "notify") {
+      localStorage.setItem(NOTIFICATION_PROMPT_DISMISSED_KEY, "1");
+      return;
+    }
+
+    localStorage.setItem(INSTALL_HELP_KEY, "1");
   }
 
   function dismissVisibleUpdate() {
@@ -109,6 +127,23 @@
 
   function wasUpdateDismissed(version) {
     return sessionStorage.getItem(UPDATE_DISMISSED_VERSION_KEY) === String(version || "");
+  }
+
+  function markUpdateApplied(version) {
+    const safeVersion = String(version || APP_VERSION);
+    localStorage.setItem(UPDATE_APPLIED_VERSION_KEY, safeVersion);
+    sessionStorage.setItem(UPDATE_APPLIED_VERSION_KEY, safeVersion);
+  }
+
+  function wasUpdateApplied(version) {
+    const safeVersion = String(version || APP_VERSION);
+    return localStorage.getItem(UPDATE_APPLIED_VERSION_KEY) === safeVersion ||
+      sessionStorage.getItem(UPDATE_APPLIED_VERSION_KEY) === safeVersion;
+  }
+
+  function shouldShowUpdatePrompt(version) {
+    const safeVersion = String(version || APP_VERSION);
+    return !wasUpdateDismissed(safeVersion) && !wasUpdateApplied(safeVersion);
   }
 
   function hidePanel() {
@@ -137,7 +172,10 @@
     if (refreshing) return;
 
     refreshing = true;
+    const versionBeingApplied = activeUpdateVersion || APP_VERSION;
+    markUpdateApplied(versionBeingApplied);
     sessionStorage.setItem(UPDATE_RELOAD_KEY, "1");
+    sessionStorage.setItem(POST_UPDATE_NOTIFY_PROMPT_KEY, "1");
     hidePanel();
 
     const btn = document.getElementById("pwaUpdateBtn");
@@ -168,6 +206,7 @@
 
   function showInstallHelpIfNeeded() {
     if (!shouldShowInstallHelp()) return;
+    if (document.getElementById("pwaPanel") && !document.getElementById("pwaPanel").classList.contains("pwa-hidden")) return;
 
     if (deferredInstallPrompt) {
       showPanel({
@@ -187,8 +226,81 @@
         iosHelp: true,
         smallNote: "En iPhone la instalación se hace desde Safari."
       });
+      return;
     }
+
+    showPanel({
+      title: "Instala la Quiniela",
+      message: "Si Chrome no muestra el botón automático, usa el menú del navegador y elige Instalar app o Agregar a pantalla principal.",
+      mode: "manual",
+      smallNote: "Este aviso no bloquea la app. Puedes cerrarlo y seguir usando la quiniela."
+    });
   }
+  function shouldShowNotificationPrompt({ force = false } = {}) {
+    if (!("Notification" in window)) return false;
+    if (Notification.permission === "denied") return false;
+
+    const dismissed = localStorage.getItem(NOTIFICATION_PROMPT_DISMISSED_KEY) === "1";
+    const confirmedVersion = localStorage.getItem(FCM_TOKEN_CONFIRMED_VERSION_KEY);
+    const hasToken = Boolean(localStorage.getItem(FCM_TOKEN_KEY));
+
+    if (force) return true;
+    if (dismissed) return false;
+
+    // Si aún no se ha pedido permiso, mostramos el aviso normal.
+    if (Notification.permission === "default") return true;
+
+    // Si el permiso ya fue concedido pero no tenemos token confirmado para esta versión,
+    // mostramos el botón para registrar/reparar avisos sin pedir permiso otra vez.
+    if (Notification.permission === "granted") {
+      return !hasToken || confirmedVersion !== APP_VERSION;
+    }
+
+    return false;
+  }
+
+  function showNotificationPromptIfNeeded({ force = false } = {}) {
+    if (activePanelMode === "update") return false;
+    if (!shouldShowNotificationPrompt({ force })) return false;
+
+    if (force) {
+      localStorage.removeItem(NOTIFICATION_PROMPT_DISMISSED_KEY);
+    }
+
+    const alreadyGranted = ("Notification" in window) && Notification.permission === "granted";
+
+    showPanel({
+      title: alreadyGranted ? "Reactivar avisos de partidos" : "Activa avisos de partidos",
+      message: alreadyGranted
+        ? "El permiso ya está concedido. Toca el botón para registrar este dispositivo nuevamente en Firebase."
+        : "Te avisaremos 15 minutos antes de cada partido activo de la quiniela.",
+      mode: "notify",
+      smallNote: alreadyGranted
+        ? "Esto repara tokens vencidos después de reinstalar o borrar datos."
+        : "Puedes aceptar ahora o dejarlo para después. No se enviará spam, palabra de PWA decente."
+    });
+    return true;
+  }
+
+  function consumePostUpdateNotificationPrompt() {
+    const shouldShow = sessionStorage.getItem(POST_UPDATE_NOTIFY_PROMPT_KEY) === "1";
+    sessionStorage.removeItem(POST_UPDATE_NOTIFY_PROMPT_KEY);
+    return shouldShow;
+  }
+
+  function runPwaMigration() {
+    if (localStorage.getItem(PWA_MIGRATION_KEY) === "1") return;
+
+    // v4.2.8: limpiamos banderas viejas que podían dejar al usuario en limbo:
+    // sin prompt de instalación y sin prompt para reparar avisos.
+    localStorage.removeItem(INSTALL_HELP_KEY);
+    localStorage.removeItem(NOTIFICATION_PROMPT_DISMISSED_KEY);
+    localStorage.removeItem("quiniela-pwa-update-reload-v4.2.4");
+
+    // No borramos NOTIFICATION_KEY ni FCM_TOKEN_KEY: si el dispositivo está bien, se conserva.
+    localStorage.setItem(PWA_MIGRATION_KEY, "1");
+  }
+
 
   async function checkForNewVersion() {
     try {
@@ -196,7 +308,7 @@
       if (!response.ok) return;
       const info = await response.json();
 
-      if (info?.version && compareVersions(info.version, APP_VERSION) > 0 && !wasUpdateDismissed(info.version)) {
+      if (info?.version && compareVersions(info.version, APP_VERSION) > 0 && shouldShowUpdatePrompt(info.version)) {
         showPanel({
           title: `Nueva versión ${info.version}`,
           message: "Ya hay una actualización lista. Puedes aplicarla sin reinstalar la app.",
@@ -273,6 +385,96 @@
     }
   }
 
+
+  function isFirebaseReady() {
+    return Boolean(window.QuinielaFirebase?.messaging && window.QuinielaFirebase?.db);
+  }
+
+  async function saveFcmToken(token) {
+    if (!token || !window.QuinielaFirebase?.db) return false;
+
+    const db = window.QuinielaFirebase.db;
+    const collection = window.QuinielaFirebase.tokenCollection || "fcmTokens";
+
+    await db.collection(collection).doc(token).set({
+      token,
+      enabled: true,
+      appVersion: APP_VERSION,
+      platform: navigator.platform || "",
+      userAgent: navigator.userAgent || "",
+      language: navigator.language || "es-MX",
+      pageUrl: location.href,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+
+    localStorage.setItem("quiniela-fcm-token", token);
+    return true;
+  }
+
+  function withTimeout(promise, ms, message) {
+    let timer;
+    const timeout = new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error(message || "Operación agotó el tiempo de espera.")), ms);
+    });
+
+    return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+  }
+
+  async function registerFcmToken() {
+    if (sessionStorage.getItem(FCM_REGISTERING_KEY) === "1") {
+      console.info("Registro FCM ya en progreso; se evita llamada duplicada.");
+      return localStorage.getItem(FCM_TOKEN_KEY) || "";
+    }
+
+    sessionStorage.setItem(FCM_REGISTERING_KEY, "1");
+
+    try {
+      if (!isFirebaseReady()) {
+        throw new Error("Firebase Messaging o Firestore no está disponible.");
+      }
+
+      if (!swRegistration) {
+        swRegistration = await navigator.serviceWorker.ready;
+      }
+
+      const messaging = window.QuinielaFirebase.messaging;
+      const token = await withTimeout(
+        messaging.getToken({
+          vapidKey: window.QuinielaFirebase.vapidKey,
+          serviceWorkerRegistration: swRegistration
+        }),
+        12000,
+        "Firebase tardó demasiado en generar el token."
+      );
+
+      if (!token) {
+        throw new Error("Firebase no regresó token para este dispositivo.");
+      }
+
+      await withTimeout(
+        saveFcmToken(token),
+        12000,
+        "Firestore tardó demasiado en guardar el token."
+      );
+
+      localStorage.setItem(FCM_TOKEN_CONFIRMED_VERSION_KEY, APP_VERSION);
+
+      if (!window.__quinielaFcmForegroundListener) {
+        messaging.onMessage(payload => {
+          const title = payload?.notification?.title || payload?.data?.title || "Quiniela Mundial 2026";
+          const body = payload?.notification?.body || payload?.data?.body || "Nueva notificación disponible.";
+          showLocalNotification(title, body);
+        });
+        window.__quinielaFcmForegroundListener = true;
+      }
+
+      return token;
+    } finally {
+      sessionStorage.removeItem(FCM_REGISTERING_KEY);
+    }
+  }
+
   function scheduleNextReminder() {
     clearTimeout(reminderTimer);
 
@@ -314,13 +516,27 @@
 
     if (permission === "granted") {
       localStorage.setItem(NOTIFICATION_KEY, "1");
-      scheduleNextReminder();
-      showPanel({
-        title: "Avisos activados",
-        message: "La app quedó preparada para avisarte antes de los partidos mientras esté activa o instalada.",
-        mode: "manual",
-        smallNote: "Para push reales aunque la app esté cerrada se conectará Firebase Cloud Messaging en una siguiente etapa."
-      });
+      localStorage.removeItem(NOTIFICATION_PROMPT_DISMISSED_KEY);
+
+      try {
+        await registerFcmToken();
+        scheduleNextReminder();
+        showPanel({
+          title: "Notificaciones Push activadas",
+          message: "Este dispositivo ya quedó registrado para recibir avisos 15 minutos antes de los partidos.",
+          mode: "manual",
+          smallNote: "Los envíos automáticos se harán desde GitHub Actions leyendo la tabla Knockout."
+        });
+      } catch (error) {
+        console.warn("No se pudo registrar FCM:", error);
+        scheduleNextReminder();
+        showPanel({
+          title: "Avisos locales activados",
+          message: "El permiso quedó activo, pero no se pudo registrar Firebase en este dispositivo.",
+          mode: "manual",
+          smallNote: "Revisa Firestore, los scripts de Firebase o prueba nuevamente después de publicar la versión."
+        });
+      }
     } else {
       showPanel({
         title: "Permiso no activado",
@@ -345,6 +561,7 @@
 
   navigator.serviceWorker?.addEventListener("controllerchange", () => {
     if (sessionStorage.getItem(UPDATE_RELOAD_KEY) !== "1") return;
+    markUpdateApplied(activeUpdateVersion || APP_VERSION);
     sessionStorage.removeItem(UPDATE_RELOAD_KEY);
     window.location.reload();
   });
@@ -352,6 +569,7 @@
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", async () => {
       try {
+        runPwaMigration();
         swRegistration = await navigator.serviceWorker.register("./service-worker.js", { scope: "./" });
 
         swRegistration.addEventListener("updatefound", () => {
@@ -359,7 +577,7 @@
           if (!newWorker) return;
 
           newWorker.addEventListener("statechange", () => {
-            if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+            if (newWorker.state === "installed" && navigator.serviceWorker.controller && shouldShowUpdatePrompt(APP_VERSION)) {
               showPanel({
                 title: "Nueva versión lista",
                 message: "Hay mejoras disponibles. Actualiza sin reinstalar la app.",
@@ -371,7 +589,7 @@
           });
         });
 
-        if (swRegistration.waiting && navigator.serviceWorker.controller) {
+        if (swRegistration.waiting && navigator.serviceWorker.controller && shouldShowUpdatePrompt(APP_VERSION)) {
           showPanel({
             title: "Nueva versión lista",
             message: "Hay mejoras disponibles. Actualiza sin reinstalar la app.",
@@ -382,8 +600,24 @@
         }
 
         await swRegistration.update();
+
+        // Importante: no registramos Firebase automáticamente al cargar.
+        // El token se registra/repara solo cuando el usuario toca "Activar avisos".
+        // Así evitamos loops que puedan congelar la quiniela si FCM o Firestore fallan.
+
+        const forceNotifyPromptAfterUpdate = consumePostUpdateNotificationPrompt();
         await checkForNewVersion();
-        setTimeout(showInstallHelpIfNeeded, 1400);
+
+        setTimeout(() => {
+          if (forceNotifyPromptAfterUpdate) {
+            showNotificationPromptIfNeeded({ force: true });
+            return;
+          }
+
+          showNotificationPromptIfNeeded();
+        }, 1200);
+
+        setTimeout(showInstallHelpIfNeeded, 1800);
         setInterval(checkForNewVersion, 10 * 60 * 1000);
         setInterval(() => swRegistration?.update(), 15 * 60 * 1000);
         setTimeout(scheduleNextReminder, 3500);
@@ -394,6 +628,7 @@
     });
   } else {
     window.addEventListener("load", () => {
+      runPwaMigration();
       setTimeout(showInstallHelpIfNeeded, 1400);
     });
   }
@@ -402,6 +637,8 @@
     version: APP_VERSION,
     checkForNewVersion,
     enableNotifications,
-    scheduleNextReminder
+    registerFcmToken,
+    scheduleNextReminder,
+    showNotificationPromptIfNeeded
   };
 })();
