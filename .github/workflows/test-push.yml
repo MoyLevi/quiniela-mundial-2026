@@ -1,12 +1,19 @@
-name: Notificaciones Knockout
+name: Prueba Push Firebase
 
 on:
-  schedule:
-    - cron: "*/5 * * * *"
   workflow_dispatch:
+    inputs:
+      title:
+        description: "Título de la notificación"
+        required: false
+        default: "🔔 Quiniela Mundial 2026"
+      body:
+        description: "Mensaje de la notificación"
+        required: false
+        default: "Bienvenido a los mensajes push de la Quiniela."
 
 jobs:
-  enviar-notificaciones:
+  enviar-prueba-push:
     runs-on: ubuntu-latest
     steps:
       - name: Descargar repositorio
@@ -20,16 +27,13 @@ jobs:
       - name: Instalar dependencias
         run: npm install
 
-      - name: Enviar notificaciones programadas
+      - name: Enviar Push de prueba
         env:
           FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
           FIREBASE_CLIENT_EMAIL: ${{ secrets.FIREBASE_CLIENT_EMAIL }}
           FIREBASE_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
-          # Alternativa: puedes usar solo FIREBASE_SERVICE_ACCOUNT_JSON con el JSON completo.
           FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
-          KNOCKOUT_CSV_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1vS2YHMj7nASBNVX0vpYD3P0Uz41gHRsf4D52qu94vfmUX-vZtjN0NV0ONBI6WPWFJx81a1msQB8Xfy1/pub?gid=965041697&single=true&output=csv"
           APP_URL: "https://moylevi.github.io/quiniela-mundial-2026/"
-          TIME_ZONE: "America/Mexico_City"
-          NOTIFICATION_MINUTES_BEFORE: "15"
-          NOTIFICATION_WINDOW_MINUTES: "5"
-        run: npm run send-notifications
+          TEST_PUSH_TITLE: ${{ github.event.inputs.title }}
+          TEST_PUSH_BODY: ${{ github.event.inputs.body }}
+        run: npm run send-test-notification
