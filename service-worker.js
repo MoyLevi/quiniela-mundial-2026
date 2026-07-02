@@ -1,4 +1,4 @@
-const APP_VERSION = "4.1.5";
+const APP_VERSION = "4.2.8";
 const CACHE_PREFIX = "quiniela-mundial-2026";
 const CACHE_NAME = `${CACHE_PREFIX}-v${APP_VERSION}`;
 
@@ -9,20 +9,22 @@ const APP_SHELL = [
   "./manifest.json",
   "./version.json",
   "./favicon.png",
-  "./css/base.css?v=4.1.5",
-  "./css/layout.css?v=4.1.5",
-  "./css/components.css?v=4.1.5",
-  "./css/responsive.css?v=4.1.5",
-  "./js/config.js?v=4.1.5",
-  "./js/data.js?v=4.1.5",
-  "./js/utils.js?v=4.1.5",
-  "./js/scoring.js?v=4.1.5",
-  "./js/views-inicio.js?v=4.1.5",
-  "./js/views-partidos.js?v=4.1.5",
-  "./js/views-tabla.js?v=4.1.5",
-  "./js/views-stats.js?v=4.1.5",
-  "./js/app.js?v=4.1.5",
-  "./js/pwa.js?v=4.1.5",
+  "./css/base.css?v=4.2.8",
+  "./css/layout.css?v=4.2.8",
+  "./css/components.css?v=4.2.8",
+  "./css/responsive.css?v=4.2.8",
+  "./js/config.js?v=4.2.8",
+  "./js/data.js?v=4.2.8",
+  "./js/utils.js?v=4.2.8",
+  "./js/scoring.js?v=4.2.8",
+  "./js/views-inicio.js?v=4.2.8",
+  "./js/views-partidos.js?v=4.2.8",
+  "./js/views-tabla.js?v=4.2.8",
+  "./js/views-stats.js?v=4.2.8",
+  "./js/app.js?v=4.2.8",
+  "./js/firebase.js?v=4.2.8",
+  "./js/pwa.js?v=4.2.8",
+  "./js/notifications.js?v=4.2.8",
   "./img/copa-fifa.png",
   "./img/reglas-premios.png",
   "./img/trionda.png",
@@ -31,10 +33,29 @@ const APP_SHELL = [
   "./icons/icon-maskable-512.png"
 ];
 
+async function cacheAppShell() {
+  const cache = await caches.open(CACHE_NAME);
+  const results = await Promise.allSettled(
+    APP_SHELL.map(async url => {
+      const response = await fetch(url, { cache: "reload" });
+      if (!response.ok) throw new Error(`${url} -> ${response.status}`);
+      await cache.put(url, response);
+    })
+  );
+
+  const failed = results
+    .map((result, index) => ({ result, url: APP_SHELL[index] }))
+    .filter(item => item.result.status === "rejected");
+
+  if (failed.length) {
+    console.warn("Algunos archivos no se pudieron precachear, pero la actualización continuará:", failed.map(f => f.url));
+  }
+}
+
 self.addEventListener("install", event => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(APP_SHELL))
+    cacheAppShell()
+      .catch(error => console.warn("Precache incompleto:", error))
       .then(() => self.skipWaiting())
   );
 });
@@ -69,7 +90,12 @@ function isVersionFile(url) {
 
 async function networkFirst(request) {
   try {
-    return await fetch(request, { cache: "no-store" });
+    const response = await fetch(request, { cache: "no-store" });
+    if (response?.ok && request.method === "GET") {
+      const cache = await caches.open(CACHE_NAME);
+      cache.put(request, response.clone()).catch(() => {});
+    }
+    return response;
   } catch (error) {
     const cached = await caches.match(request);
     return cached || caches.match("./offline.html");
@@ -114,15 +140,55 @@ self.addEventListener("fetch", event => {
   event.respondWith(cacheFirst(request));
 });
 
+function getNotificationFromPayload(payload = {}) {
+  const notification = payload.notification || {};
+  const data = payload.data || payload;
+  const webpushNotification = payload.webpush?.notification || {};
+  const title = notification.title || webpushNotification.title || data.title || "Quiniela Mundial 2026";
+
+  return {
+    title,
+    options: {
+      body: notification.body || webpushNotification.body || data.body || "Tienes una nueva notificación.",
+      icon: data.icon || webpushNotification.icon || "./icons/icon-192.png",
+      badge: data.badge || webpushNotification.badge || "./icons/icon-192.png",
+      tag: data.tag || webpushNotification.tag || "quiniela-mundial-2026",
+      data: {
+        url: data.url || payload.fcmOptions?.link || payload.webpush?.fcm_options?.link || "./",
+        ...data
+      },
+      renotify: true
+    }
+  };
+}
+
+self.addEventListener("push", event => {
+  let payload = {};
+
+  try {
+    payload = event.data ? event.data.json() : {};
+  } catch (_) {
+    payload = { data: { body: event.data ? event.data.text() : "" } };
+  }
+
+  const { title, options } = getNotificationFromPayload(payload);
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
 self.addEventListener("notificationclick", event => {
   event.notification.close();
+
+  const targetUrl = event.notification?.data?.url || "./";
 
   event.waitUntil(
     clients.matchAll({ type: "window", includeUncontrolled: true }).then(clientList => {
       for (const client of clientList) {
-        if ("focus" in client) return client.focus();
+        if ("focus" in client) {
+          if ("navigate" in client) client.navigate(targetUrl);
+          return client.focus();
+        }
       }
-      if (clients.openWindow) return clients.openWindow("./");
+      if (clients.openWindow) return clients.openWindow(targetUrl);
       return null;
     })
   );

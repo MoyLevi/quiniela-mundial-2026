@@ -1,11 +1,13 @@
 {
-  "version": "4.1.5",
-  "build": "415",
-  "release": "2026-06-29",
-  "name": "Quiniela Mundial 2026 PWA",
+  "version": "4.2.8",
+  "date": "2026-07-01",
   "notes": [
-    "Corrección de visualización de penales en Pronósticos del Partido",
-    "Los ceros de penales ya no se muestran cuando el pick no tuvo penales",
-    "El punto de penales KO sólo cuenta si los penales coinciden exactamente"
+    "Notificaciones automáticas Knockout listas para producción.",
+    "Tiempo configurable con NOTIFICATION_MINUTES_BEFORE, por defecto 15 minutos.",
+    "Ventana de tolerancia configurable con NOTIFICATION_WINDOW_MINUTES, por defecto 5 minutos.",
+    "Mensajes personalizables desde scripts/send-notifications.js.",
+    "Anti-duplicados reforzado por tipo de notificación, IDPartido y minutos antes.",
+    "Logs más claros en GitHub Actions.",
+    "Se conserva el envío de pruebas personalizadas."
   ]
 }
