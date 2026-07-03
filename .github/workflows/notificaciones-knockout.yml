@@ -15,7 +15,7 @@ jobs:
       - name: Preparar Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "24"
 
       - name: Instalar dependencias
         run: npm install
@@ -31,5 +31,6 @@ jobs:
           APP_URL: "https://moylevi.github.io/quiniela-mundial-2026/"
           TIME_ZONE: "America/Mexico_City"
           NOTIFICATION_MINUTES_BEFORE: "15"
-          NOTIFICATION_WINDOW_MINUTES: "5"
+          NOTIFICATION_WINDOW_MINUTES: "20"
+          NOTIFICATION_SEND_UNTIL_MINUTES_BEFORE_START: "0"
         run: npm run send-notifications
