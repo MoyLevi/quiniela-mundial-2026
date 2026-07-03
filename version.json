@@ -1,10 +1,11 @@
 {
-  "version": "4.2.9",
+  "version": "4.3.2",
   "date": "2026-07-02",
   "notes": [
-    "Mejoras visuales en el acceso a Picks Fase Final.",
-    "Actualización de íconos en Marcas Destacadas.",
-    "Marcadores exactos ahora suma Fase de Grupos + Knockout.",
-    "Próximos partidos ordenados por fecha y hora real, incluyendo a.m./p.m."
+    "Envia notificaciones 15 minutos antes del inicio de cada partido.",
+    "Interpreta los horarios de partidos en America/Mexico_City.",
+    "Mantiene candado anti-duplicado por partido en sentNotifications.",
+    "El mensaje muestra los minutos restantes reales al momento del envío.",
+    "GitHub Actions actualizado a Node.js 24."
   ]
 }
