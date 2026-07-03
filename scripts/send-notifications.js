@@ -3,19 +3,20 @@ import Papa from "papaparse";
 import { DateTime } from "luxon";
 
 /**
- * Notificaciones automáticas Knockout - v4.2.8
+ * Notificaciones automáticas Knockout - v4.3.2
  *
- * Ajustes rápidos:
- * - NOTIFICATION_MINUTES_BEFORE: minutos antes del partido. Ej. 15, 30, 60.
- * - NOTIFICATION_WINDOW_MINUTES: ventana de tolerancia. Ej. 5 significa:
- *   si MINUTOS_ANTES=15, enviará cuando falten entre 15 y 10 minutos.
+ * Mejora clave:
+ * - La ventana real ahora es de 20 a 0 minutos antes del inicio,
+ *   para cubrir retrasos normales de GitHub Actions.
+ * - Se soporta FechaHora o Fecha + Hora, incluyendo horas tipo "1:00 p.m.".
  */
 const KNOCKOUT_CSV_URL = process.env.KNOCKOUT_CSV_URL;
 const APP_URL = process.env.APP_URL || "https://moylevi.github.io/quiniela-mundial-2026/";
 const TIME_ZONE = process.env.TIME_ZONE || "America/Mexico_City";
 
 const MINUTOS_ANTES = Number(process.env.NOTIFICATION_MINUTES_BEFORE || 15);
-const VENTANA_TOLERANCIA_MINUTOS = Number(process.env.NOTIFICATION_WINDOW_MINUTES || 5);
+const VENTANA_TOLERANCIA_MINUTOS = Number(process.env.NOTIFICATION_WINDOW_MINUTES || 20);
+const ENVIAR_HASTA_MINUTOS_ANTES_DEL_INICIO = Number(process.env.NOTIFICATION_SEND_UNTIL_MINUTES_BEFORE_START || 0);
 
 const TOKEN_COLLECTION = process.env.FCM_TOKEN_COLLECTION || "fcmTokens";
 const SENT_COLLECTION = process.env.SENT_NOTIFICATION_COLLECTION || "sentNotifications";
@@ -27,6 +28,20 @@ const MESSAGE_TEMPLATE = {
 };
 
 const CHUNK_SIZE = 500;
+const MESES_ES = {
+  enero: 1, ene: 1,
+  febrero: 2, feb: 2,
+  marzo: 3, mar: 3,
+  abril: 4, abr: 4,
+  mayo: 5, may: 5,
+  junio: 6, jun: 6,
+  julio: 7, jul: 7,
+  agosto: 8, ago: 8,
+  septiembre: 9, sept: 9, sep: 9,
+  octubre: 10, oct: 10,
+  noviembre: 11, nov: 11,
+  diciembre: 12, dic: 12
+};
 
 function getServiceAccount() {
   if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
@@ -52,6 +67,14 @@ function normalize(value) {
   return String(value || "").trim();
 }
 
+function firstValue(row, names) {
+  for (const name of names) {
+    const value = normalize(row[name]);
+    if (value) return value;
+  }
+  return "";
+}
+
 function isActiveMatch(row) {
   const activo = normalize(row.Activo).toUpperCase();
   const status = normalize(row.Status).toLowerCase();
@@ -59,15 +82,96 @@ function isActiveMatch(row) {
 }
 
 function getMatchId(row) {
-  return normalize(row.IDPartido) || normalize(row.ID) || normalize(row.Num);
+  return firstValue(row, ["IDPartido", "IdPartido", "ID Partido", "PartidoID", "ID", "Num"]);
+}
+
+function normalizeMeridian(value) {
+  return normalize(value)
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .replace(/a\.?\s*m\.?/g, "AM")
+    .replace(/p\.?\s*m\.?/g, "PM")
+    .replace(/a\.m\./g, "AM")
+    .replace(/p\.m\./g, "PM")
+    .replace(/a\.m/g, "AM")
+    .replace(/p\.m/g, "PM");
+}
+
+function parseTimeText(value) {
+  const raw = normalizeMeridian(value);
+  const match12 = raw.match(/(\d{1,2})(?::(\d{2}))?\s*(AM|PM)/i);
+  if (match12) {
+    let hour = Number(match12[1]);
+    const minute = Number(match12[2] || 0);
+    const meridian = match12[3].toUpperCase();
+    if (meridian === "PM" && hour < 12) hour += 12;
+    if (meridian === "AM" && hour === 12) hour = 0;
+    return { hour, minute };
+  }
+
+  const match24 = raw.match(/(\d{1,2}):(\d{2})/);
+  if (match24) return { hour: Number(match24[1]), minute: Number(match24[2]) };
+
+  const matchHour = raw.match(/^\d{1,2}$/);
+  if (matchHour) return { hour: Number(raw), minute: 0 };
+
+  return null;
+}
+
+function parseSpanishDateText(value) {
+  const raw = normalize(value)
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/,/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  let match = raw.match(/(\d{1,2})[.\-/\s]+([a-z]+)(?:[.\-/\s]+(\d{4}))?/i);
+  if (!match) match = raw.match(/(?:lunes|martes|miercoles|jueves|viernes|sabado|domingo)\s+(\d{1,2})[.\-/\s]+([a-z]+)(?:[.\-/\s]+(\d{4}))?/i);
+  if (!match) return null;
+
+  const day = Number(match[1]);
+  const month = MESES_ES[match[2]];
+  const year = Number(match[3] || process.env.NOTIFICATION_YEAR || 2026);
+
+  if (!day || !month || !year) return null;
+  return { year, month, day };
+}
+
+function parseDateTimeCandidates(value) {
+  const raw = normalize(value);
+  if (!raw) return [];
+
+  return [
+    DateTime.fromISO(raw, { zone: TIME_ZONE }),
+    DateTime.fromFormat(raw, "yyyy-MM-dd HH:mm", { zone: TIME_ZONE }),
+    DateTime.fromFormat(raw, "yyyy/MM/dd HH:mm", { zone: TIME_ZONE }),
+    DateTime.fromFormat(normalizeMeridian(raw), "yyyy-MM-dd h:mm a", { zone: TIME_ZONE }),
+    DateTime.fromFormat(normalizeMeridian(raw), "yyyy/MM/dd h:mm a", { zone: TIME_ZONE })
+  ].filter(date => date.isValid);
 }
 
 function parseCdmxDate(row) {
-  const fechaHora = normalize(row.FechaHora);
-  if (!fechaHora) return null;
+  const fechaHora = firstValue(row, ["FechaHora", "Fecha Hora", "DateTime", "Fecha_Hora"]);
+  const candidates = parseDateTimeCandidates(fechaHora);
+  if (candidates.length) return candidates[0];
 
-  const date = DateTime.fromFormat(fechaHora, "yyyy-MM-dd HH:mm", { zone: TIME_ZONE });
-  return date.isValid ? date : null;
+  const fecha = firstValue(row, ["Fecha", "Date", "Dia", "Día"]);
+  const hora = firstValue(row, ["Hora", "Time", "Horario"]);
+
+  const dateParts = parseSpanishDateText(fecha);
+  const timeParts = parseTimeText(hora);
+
+  if (!dateParts || !timeParts) return null;
+
+  const parsed = DateTime.fromObject({
+    ...dateParts,
+    hour: timeParts.hour,
+    minute: timeParts.minute
+  }, { zone: TIME_ZONE });
+
+  return parsed.isValid ? parsed : null;
 }
 
 function replaceTemplate(template, values) {
@@ -75,16 +179,17 @@ function replaceTemplate(template, values) {
 }
 
 function getTeamNames(row) {
-  const local = normalize(row.Local) || normalize(row.Loc) || "Equipo local";
-  const visitante = normalize(row.Visitante) || normalize(row.Visita) || normalize(row.Vis) || "Equipo visitante";
+  const local = firstValue(row, ["Local", "Loc", "Equipo Local", "EquipoLocal"]) || "Equipo local";
+  const visitante = firstValue(row, ["Visitante", "Visita", "Vis", "Equipo Visitante", "EquipoVisitante"]) || "Equipo visitante";
   return { local, visitante };
 }
 
-function buildMessage(row, matchId, matchTime) {
+function buildMessage(row, matchId, matchTime, now) {
   const { local, visitante } = getTeamNames(row);
-  const lugar = normalize(row.Lugar) || "Sede por confirmar";
-  const stage = normalize(row.Stage);
+  const lugar = firstValue(row, ["Lugar", "Sede", "Estadio"]) || "Sede por confirmar";
+  const stage = firstValue(row, ["Stage", "Fase", "Ronda"]);
   const hora = matchTime.setZone(TIME_ZONE).toFormat("HH:mm");
+  const minutosRestantes = Math.max(0, Math.round(getMinutesUntil(matchTime, now)));
 
   const values = {
     LOCAL: local,
@@ -92,7 +197,7 @@ function buildMessage(row, matchId, matchTime) {
     LUGAR: lugar,
     STAGE: stage,
     HORA: hora,
-    MINUTOS: String(MINUTOS_ANTES)
+    MINUTOS: String(minutosRestantes)
   };
 
   const title = replaceTemplate(MESSAGE_TEMPLATE.title, values);
@@ -110,6 +215,7 @@ function buildMessage(row, matchId, matchTime) {
       stage,
       hora,
       minutosAntes: String(MINUTOS_ANTES),
+      minutosRestantes: String(minutosRestantes),
       url: APP_URL,
       title,
       body
@@ -183,9 +289,19 @@ function getMinutesUntil(matchTime, now) {
   return matchTime.diff(now, "minutes").minutes;
 }
 
+function getNotificationWindowLimits() {
+  // NOTIFICATION_WINDOW_MINUTES representa la ventana real antes del inicio.
+  // Ejemplo: 20 => notificar desde 20 hasta 0 minutos antes del partido.
+  const upperLimit = Math.max(MINUTOS_ANTES, VENTANA_TOLERANCIA_MINUTOS);
+  const lowerLimit = Math.max(0, ENVIAR_HASTA_MINUTOS_ANTES_DEL_INICIO);
+  return { upperLimit, lowerLimit };
+}
+
 function isInsideNotificationWindow(matchTime, now) {
   const minutesUntil = getMinutesUntil(matchTime, now);
-  return minutesUntil <= MINUTOS_ANTES && minutesUntil > (MINUTOS_ANTES - VENTANA_TOLERANCIA_MINUTOS);
+  const { upperLimit, lowerLimit } = getNotificationWindowLimits();
+
+  return minutesUntil <= upperLimit && minutesUntil >= lowerLimit;
 }
 
 async function disableInvalidTokens(invalidTokenDocs) {
@@ -195,7 +311,7 @@ async function disableInvalidTokens(invalidTokenDocs) {
     item.ref.set({
       enabled: false,
       disabledAt: admin.firestore.FieldValue.serverTimestamp(),
-      disabledReason: "invalid-token-match-reminder-v4.2.8"
+      disabledReason: "invalid-token-match-reminder-v4.3.2"
     }, { merge: true })
   ));
 
@@ -217,7 +333,7 @@ async function sendReminder(db, messaging, row, matchTime, now) {
   const tokenDocs = await getActiveTokenDocs(db);
   if (!tokenDocs.length) return { skipped: true, reason: "sin tokens", matchId, sentId };
 
-  const message = buildMessage(row, matchId, matchTime);
+  const message = buildMessage(row, matchId, matchTime, now);
   const cleanAppUrl = APP_URL.replace(/\/$/, "");
   const invalidTokenDocs = [];
 
@@ -225,7 +341,7 @@ async function sendReminder(db, messaging, row, matchTime, now) {
   let failureCount = 0;
 
   console.log(`[INFO] Enviando: ${message.data.local} vs ${message.data.visitante}`);
-  console.log(`[INFO] Partido CDMX: ${matchTime.toFormat("yyyy-MM-dd HH:mm")}`);
+  console.log(`[INFO] Partido ${TIME_ZONE}: ${matchTime.toFormat("yyyy-MM-dd HH:mm")}`);
   console.log(`[INFO] Faltan aprox: ${Math.round(getMinutesUntil(matchTime, now))} minutos`);
   console.log(`[INFO] sentId: ${sentId}`);
 
@@ -285,6 +401,7 @@ async function sendReminder(db, messaging, row, matchTime, now) {
     sentId,
     minutesBefore: MINUTOS_ANTES,
     windowMinutes: VENTANA_TOLERANCIA_MINUTOS,
+    timeZone: TIME_ZONE,
     local: message.data.local,
     visitante: message.data.visitante,
     lugar: message.data.lugar,
@@ -315,9 +432,10 @@ async function main() {
   const rows = await fetchKnockoutRows();
   const now = DateTime.now().setZone(TIME_ZONE);
 
-  console.log(`[INFO] Hora actual CDMX: ${now.toFormat("yyyy-MM-dd HH:mm:ss")}`);
+  console.log(`[INFO] Hora actual ${TIME_ZONE}: ${now.toFormat("yyyy-MM-dd HH:mm:ss")}`);
   console.log(`[INFO] Minutos antes configurados: ${MINUTOS_ANTES}`);
-  console.log(`[INFO] Ventana de tolerancia: ${VENTANA_TOLERANCIA_MINUTOS} minutos`);
+  const { upperLimit, lowerLimit } = getNotificationWindowLimits();
+  console.log(`[INFO] Ventana real de notificación: ${upperLimit} a ${lowerLimit} minutos antes del inicio`);
   console.log(`[INFO] Revisando ${rows.length} partidos Knockout...`);
 
   const activeRows = rows
@@ -325,12 +443,12 @@ async function main() {
     .map(row => ({ row, matchTime: parseCdmxDate(row) }))
     .filter(item => item.matchTime);
 
-  console.log(`[INFO] Partidos activos con FechaHora válida: ${activeRows.length}`);
+  console.log(`[INFO] Partidos activos con fecha/hora válida: ${activeRows.length}`);
 
   const candidates = activeRows.filter(({ matchTime }) => isInsideNotificationWindow(matchTime, now));
 
   if (!candidates.length) {
-    console.log(`[INFO] No hay partidos dentro de la ventana de notificación (${MINUTOS_ANTES} a ${MINUTOS_ANTES - VENTANA_TOLERANCIA_MINUTOS} minutos antes).`);
+    console.log(`[INFO] No hay partidos dentro de la ventana de notificación (${upperLimit} a ${lowerLimit} minutos antes).`);
 
     const nextMatch = activeRows
       .filter(({ matchTime }) => matchTime > now)
@@ -338,7 +456,7 @@ async function main() {
 
     if (nextMatch) {
       const { local, visitante } = getTeamNames(nextMatch.row);
-      console.log(`[INFO] Próximo partido activo: ${local} vs ${visitante} | ${nextMatch.matchTime.toFormat("yyyy-MM-dd HH:mm")} CDMX | faltan ${Math.round(getMinutesUntil(nextMatch.matchTime, now))} minutos.`);
+      console.log(`[INFO] Próximo partido activo: ${local} vs ${visitante} | ${nextMatch.matchTime.toFormat("yyyy-MM-dd HH:mm")} ${TIME_ZONE} | faltan ${Math.round(getMinutesUntil(nextMatch.matchTime, now))} minutos.`);
     }
 
     return;
