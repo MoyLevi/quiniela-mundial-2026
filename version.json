@@ -1,13 +1,10 @@
 {
-  "version": "4.2.8",
-  "date": "2026-07-01",
+  "version": "4.2.9",
+  "date": "2026-07-02",
   "notes": [
-    "Notificaciones automáticas Knockout listas para producción.",
-    "Tiempo configurable con NOTIFICATION_MINUTES_BEFORE, por defecto 15 minutos.",
-    "Ventana de tolerancia configurable con NOTIFICATION_WINDOW_MINUTES, por defecto 5 minutos.",
-    "Mensajes personalizables desde scripts/send-notifications.js.",
-    "Anti-duplicados reforzado por tipo de notificación, IDPartido y minutos antes.",
-    "Logs más claros en GitHub Actions.",
-    "Se conserva el envío de pruebas personalizadas."
+    "Mejoras visuales en el acceso a Picks Fase Final.",
+    "Actualización de íconos en Marcas Destacadas.",
+    "Marcadores exactos ahora suma Fase de Grupos + Knockout.",
+    "Próximos partidos ordenados por fecha y hora real, incluyendo a.m./p.m."
   ]
 }
