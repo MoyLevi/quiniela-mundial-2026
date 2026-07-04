@@ -1,5 +1,5 @@
 (() => {
-  const APP_VERSION = "4.3.2";
+  const APP_VERSION = "4.3.4";
   const VERSION_URL = `./version.json?ts=${Date.now()}`;
   const INSTALL_HELP_KEY = "quiniela-pwa-install-help-dismissed";
   const NOTIFICATION_KEY = "quiniela-pwa-local-notifications-enabled";

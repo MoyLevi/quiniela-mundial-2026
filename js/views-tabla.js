@@ -519,7 +519,7 @@ function getRankingRecord(tipo){
     const ranking = getRanking();
 
     if(tipo === "exactos"){
-        return getRankingExactosTotales();
+        return ranking.sort((a,b) => b.exactos - a.exactos || b.puntos - a.puntos || a.nombre.localeCompare(b.nombre, "es"));
     }
 
     if(tipo === "ganadores"){
@@ -535,7 +535,7 @@ function getRankingRecord(tipo){
 
 function crearHTMLDetalleRecordUsuarios(tipo){
     const config = {
-        exactos: { titulo: "Más marcadores exactos", campo: "exactos", icono: "🎯", ayuda: "Fase de grupos + Knockout." },
+        exactos: { titulo: "Más marcadores exactos", campo: "exactos", icono: "🎯", ayuda: "Marcadores que valen 3 puntos." },
         ganadores: { titulo: "Más ganadores", campo: "ganadores", icono: "✅", ayuda: "Aciertos de ganador." },
         diferencias: { titulo: "Más diferencia + ganador", campo: "diferencias", icono: "📐", ayuda: "Aciertos que valen 2 puntos." },
         exactosKO: { titulo: "Más exactos en Knockout", campo: "marcador", icono: "⚔️", ayuda: "Marcadores exactos en partidos KO." }
@@ -712,39 +712,6 @@ function mostrarDetalleRecord(tipo, pagina = 1, scrollTitulo = false){
     mostrarTabla("records");
 }
 
-function getRankingExactosTotales(){
-    const mapa = new Map();
-
-    (typeof getRanking === "function" ? getRanking() : []).forEach(u => {
-        const nombre = u.nombre || "";
-        if(!nombre) return;
-        mapa.set(nombre, {
-            ...u,
-            nombre,
-            exactos: Number(u.exactos || 0),
-            puntos: Number(u.puntos || 0),
-            exactosGrupos: Number(u.exactos || 0),
-            exactosKO: 0
-        });
-    });
-
-    (typeof getRankingKO === "function" ? getRankingKO() : []).forEach(u => {
-        const nombre = u.nombre || "";
-        if(!nombre) return;
-        const actual = mapa.get(nombre) || { nombre, exactos:0, puntos:0, exactosGrupos:0, exactosKO:0 };
-        const exactosKO = Number(u.marcador || 0);
-        actual.exactosKO = exactosKO;
-        actual.exactos = Number(actual.exactosGrupos || 0) + exactosKO;
-        actual.puntos = Number(actual.puntos || 0) + Number(u.puntos || 0);
-        mapa.set(nombre, actual);
-    });
-
-    return [...mapa.values()].sort((a,b) =>
-        (b.exactos || 0) - (a.exactos || 0) ||
-        (b.puntos || 0) - (a.puntos || 0) ||
-        (a.nombre || "").localeCompare(b.nombre || "", "es", {numeric:true})
-    );
-}
 
 function getMejorExactosKnockout(){
     const lista = typeof getRankingKO === "function" ? getRankingKO() : [];
@@ -761,7 +728,7 @@ function crearHTMLRecordsTabla(){
 
     const liderFaseGrupos = [...ranking].sort((a,b) => b.puntos - a.puntos)[0];
     const liderGeneral = (typeof getRankingGeneralCompleto === "function" ? getRankingGeneralCompleto() : ranking)[0];
-    const mejorExactos = getRankingExactosTotales()[0];
+    const mejorExactos = [...ranking].sort((a,b) => b.exactos - a.exactos)[0];
     const mejorGanadores = [...ranking].sort((a,b) => b.ganadores - a.ganadores)[0];
     const mejorDiferencias = [...ranking].sort((a,b) => b.diferencias - a.diferencias)[0];
     const mejorExactosKO = getMejorExactosKnockout();
@@ -780,15 +747,15 @@ function crearHTMLRecordsTabla(){
 
         <div class="records-grid">
             ${crearHTMLRecordCard(
-                "👑",
-                "Rey de Fase de Grupos",
+                "🔑",
+                "Key de Fase de Grupos",
                 liderFaseGrupos ? `${liderFaseGrupos.nombre} · ${liderFaseGrupos.puntos} pts` : "-",
                 "Toca para ir al standing de Fase de Grupos",
                 "faseGrupos"
             )}
 
             ${crearHTMLRecordCard(
-                "🎖️",
+                "👑",
                 "Líder general",
                 liderGeneral ? `${liderGeneral.nombre} · ${liderGeneral.puntos} pts` : "-",
                 "Mayor puntaje acumulado"
@@ -798,7 +765,7 @@ function crearHTMLRecordsTabla(){
                 "🎯",
                 "Más marcadores exactos",
                 mejorExactos ? `${mejorExactos.nombre} · ${mejorExactos.exactos}` : "-",
-                "Fase de grupos + Knockout",
+                "Toca para ver la tabla completa",
                 "exactos"
             )}
 
