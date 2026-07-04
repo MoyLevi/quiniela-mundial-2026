@@ -1,11 +1,13 @@
 {
-  "version": "4.3.2",
-  "date": "2026-07-02",
+  "version": "4.3.4",
+  "date": "2026-07-01",
   "notes": [
-    "Envia notificaciones 15 minutos antes del inicio de cada partido.",
-    "Interpreta los horarios de partidos en America/Mexico_City.",
-    "Mantiene candado anti-duplicado por partido en sentNotifications.",
-    "El mensaje muestra los minutos restantes reales al momento del envío.",
-    "GitHub Actions actualizado a Node.js 24."
+    "Notificaciones automáticas Knockout listas para producción.",
+    "Tiempo configurable con NOTIFICATION_MINUTES_BEFORE, por defecto 15 minutos.",
+    "Ventana segura 20 a 0 minutos antes para evitar saltos de GitHub Actions.",
+    "Mensajes personalizables desde scripts/send-notifications.js.",
+    "Anti-duplicados reforzado por tipo de notificación, IDPartido y minutos antes.",
+    "GitHub Actions usa Node 24 y npm install sin package-lock para evitar bloqueos por dependencias.",
+    "Se conserva el envío de pruebas personalizadas."
   ]
 }
