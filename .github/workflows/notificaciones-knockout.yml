@@ -16,9 +16,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "24"
-
+          
       - name: Instalar dependencias
-        run: npm install
+        timeout-minutes: 5
+        run: npm install --no-audit --no-fund --package-lock=false
 
       - name: Enviar notificaciones programadas
         env:
@@ -31,6 +32,6 @@ jobs:
           APP_URL: "https://moylevi.github.io/quiniela-mundial-2026/"
           TIME_ZONE: "America/Mexico_City"
           NOTIFICATION_MINUTES_BEFORE: "15"
-          NOTIFICATION_WINDOW_MINUTES: "20"
-          NOTIFICATION_SEND_UNTIL_MINUTES_BEFORE_START: "0"
+          NOTIFICATION_WINDOW_START_MINUTES: "20"
+          NOTIFICATION_WINDOW_END_MINUTES: "0"
         run: npm run send-notifications

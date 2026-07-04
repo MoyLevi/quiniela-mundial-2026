@@ -6,11 +6,11 @@ on:
       title:
         description: "Título de la notificación"
         required: false
-        default: "🔔 Quiniela Mundial 2026"
+        default: "🔔 Prueba Quiniela Mundial 2026"
       body:
         description: "Mensaje de la notificación"
         required: false
-        default: "Bienvenido a los mensajes push de la Quiniela."
+        default: "Si ves esto, Firebase Push ya funciona correctamente."
 
 jobs:
   enviar-prueba-push:
@@ -23,9 +23,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "24"
-
+          
       - name: Instalar dependencias
-        run: npm install
+        timeout-minutes: 5
+        run: npm install --no-audit --no-fund --package-lock=false
 
       - name: Enviar Push de prueba
         env:
