@@ -4896,3 +4896,35 @@
         width: 100%;
     }
 }
+
+
+/* v4.3.5 · Recupera diseño Picks Fase Final sin cambiar tamaño */
+.form-picks-home.form-picks-home-abierto{
+    background:linear-gradient(135deg, #d9f99d 0%, #fef3c7 52%, #bbf7d0 100%) !important;
+    border:1px solid #16a34a !important;
+    color:#000000 !important;
+}
+.form-picks-home.form-picks-home-abierto strong,
+.form-picks-home.form-picks-home-abierto .form-picks-abierto-textos strong{
+    color:#000000 !important;
+    font-weight:950 !important;
+}
+.form-picks-home.form-picks-home-abierto span:not(.form-picks-abierto-icono){
+    color:#000000 !important;
+    font-weight:850 !important;
+}
+.form-picks-home.form-picks-home-abierto .form-picks-abierto-icono{
+    width:28px !important;
+    height:28px !important;
+    object-fit:contain !important;
+    background:transparent !important;
+    border-radius:0 !important;
+    padding:0 !important;
+    box-shadow:none !important;
+}
+@media(max-width:600px){
+    .form-picks-home.form-picks-home-abierto .form-picks-abierto-icono{
+        width:26px !important;
+        height:26px !important;
+    }
+}
