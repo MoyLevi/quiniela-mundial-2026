@@ -1,13 +1,11 @@
 {
-  "version": "4.3.4",
+  "version": "4.3.5",
   "date": "2026-07-01",
   "notes": [
-    "Notificaciones automáticas Knockout listas para producción.",
-    "Tiempo configurable con NOTIFICATION_MINUTES_BEFORE, por defecto 15 minutos.",
-    "Ventana segura 20 a 0 minutos antes para evitar saltos de GitHub Actions.",
-    "Mensajes personalizables desde scripts/send-notifications.js.",
-    "Anti-duplicados reforzado por tipo de notificación, IDPartido y minutos antes.",
-    "GitHub Actions usa Node 24 y npm install sin package-lock para evitar bloqueos por dependencias.",
-    "Se conserva el envío de pruebas personalizadas."
+    "Recupera mejoras visuales de Picks Fase Final en Inicio.",
+    "Próximos partidos ordenados por fecha y hora con soporte a.m./p.m.",
+    "Marcas destacadas y detalles de usuario suman exactos de Fase de Grupos + Knockout.",
+    "Datos destacados suma porterías en cero de Fase de Grupos + Knockout.",
+    "Se conserva la corrección de push/notificaciones de la versión anterior."
   ]
 }
