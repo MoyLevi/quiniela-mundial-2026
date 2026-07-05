@@ -231,14 +231,43 @@ function crearHTMLRecordCard(icono, titulo, valor, detalle = "", tipoDetalle = "
 }
 
 
+function getPartidosKnockoutParaDatosDestacados(){
+    if(typeof getKnockoutResueltoGlobal === "function"){
+        return getKnockoutResueltoGlobal();
+    }
+
+    return Array.isArray(knockout) ? knockout : [];
+}
+
+function getRankingExactosCombinadosTabla(){
+    const rankingGeneral = typeof getRankingGeneralCompleto === "function" ? getRankingGeneralCompleto(true) : [];
+
+    if(Array.isArray(rankingGeneral) && rankingGeneral.length){
+        return [...rankingGeneral].sort((a,b) =>
+            (b.exactos || 0) - (a.exactos || 0) ||
+            (b.puntos || 0) - (a.puntos || 0) ||
+            (a.nombre || "").localeCompare(b.nombre || "", "es", {numeric:true})
+        );
+    }
+
+    return getRankingRecord("exactos");
+}
+
 function getDatosDestacados(){
 
     const totalPicks = picks.length;
 
-    const exactos = picks.filter(p => {
+    const exactosFaseGrupos = picks.filter(p => {
         const partido = partidos.find(x => x.id === p.partidoId);
         return partido && getPuntos(partido, p) === 3;
     }).length;
+
+    const exactosKO = Array.isArray(picksKO) ? picksKO.filter(p => {
+        const partido = typeof getPartidoGlobalKO === "function" ? getPartidoGlobalKO(p.partidoId) : null;
+        return partido && partidoFinalizado(partido) && Number(partido.golesLoc) === Number(p.golLoc) && Number(partido.golesVis) === Number(p.golVis);
+    }).length : 0;
+
+    const exactos = exactosFaseGrupos + exactosKO;
 
     const diferencias = picks.filter(p => {
         const partido = partidos.find(x => x.id === p.partidoId);
@@ -263,7 +292,7 @@ function getDatosDestacados(){
         return total + Number(partido.golesLoc) + Number(partido.golesVis);
     }, 0);
 
-    const porteriasCero = partidos.reduce((total, partido) => {
+    const porteriasCeroFaseGrupos = partidos.reduce((total, partido) => {
         if(!partidoFinalizado(partido)){
             return total;
         }
@@ -272,6 +301,18 @@ function getDatosDestacados(){
         const gv = Number(partido.golesVis);
         return total + (gv === 0 ? 1 : 0) + (gl === 0 ? 1 : 0);
     }, 0);
+
+    const porteriasCeroKO = getPartidosKnockoutParaDatosDestacados().reduce((total, partido) => {
+        if(!partidoFinalizado(partido)){
+            return total;
+        }
+
+        const gl = Number(partido.golesLoc);
+        const gv = Number(partido.golesVis);
+        return total + (gv === 0 ? 1 : 0) + (gl === 0 ? 1 : 0);
+    }, 0);
+
+    const porteriasCero = porteriasCeroFaseGrupos + porteriasCeroKO;
 
     const puntosGanados = picks.reduce((total, pick) => {
         const partido = partidos.find(p => p.id === pick.partidoId);
@@ -519,7 +560,7 @@ function getRankingRecord(tipo){
     const ranking = getRanking();
 
     if(tipo === "exactos"){
-        return ranking.sort((a,b) => b.exactos - a.exactos || b.puntos - a.puntos || a.nombre.localeCompare(b.nombre, "es"));
+        return getRankingExactosCombinadosTabla();
     }
 
     if(tipo === "ganadores"){
@@ -543,7 +584,7 @@ function crearHTMLDetalleRecordUsuarios(tipo){
 
     const lista = tipo === "exactosKO"
         ? (typeof getRankingKO === "function" ? [...getRankingKO()].sort((a,b) => (b.marcador || 0) - (a.marcador || 0) || (b.puntos || 0) - (a.puntos || 0) || a.nombre.localeCompare(b.nombre, "es", {numeric:true})) : [])
-        : getRankingRecord(tipo);
+        : (tipo === "exactos" ? getRankingExactosCombinadosTabla() : getRankingRecord(tipo));
 
     return `
         <button onclick="volverARecordsMarcas()" class="btnVolver">⬅ Volver</button>
@@ -728,7 +769,8 @@ function crearHTMLRecordsTabla(){
 
     const liderFaseGrupos = [...ranking].sort((a,b) => b.puntos - a.puntos)[0];
     const liderGeneral = (typeof getRankingGeneralCompleto === "function" ? getRankingGeneralCompleto() : ranking)[0];
-    const mejorExactos = [...ranking].sort((a,b) => b.exactos - a.exactos)[0];
+    const rankingExactosCombinados = getRankingExactosCombinadosTabla();
+    const mejorExactos = rankingExactosCombinados[0];
     const mejorGanadores = [...ranking].sort((a,b) => b.ganadores - a.ganadores)[0];
     const mejorDiferencias = [...ranking].sort((a,b) => b.diferencias - a.diferencias)[0];
     const mejorExactosKO = getMejorExactosKnockout();
@@ -747,15 +789,15 @@ function crearHTMLRecordsTabla(){
 
         <div class="records-grid">
             ${crearHTMLRecordCard(
-                "🔑",
-                "Key de Fase de Grupos",
+                "👑",
+                "Rey de Fase de Grupos",
                 liderFaseGrupos ? `${liderFaseGrupos.nombre} · ${liderFaseGrupos.puntos} pts` : "-",
                 "Toca para ir al standing de Fase de Grupos",
                 "faseGrupos"
             )}
 
             ${crearHTMLRecordCard(
-                "👑",
+                "🎖️",
                 "Líder general",
                 liderGeneral ? `${liderGeneral.nombre} · ${liderGeneral.puntos} pts` : "-",
                 "Mayor puntaje acumulado"
@@ -1539,7 +1581,7 @@ function verDetalleUsuario(idUser, pagina = 1, scrollPronosticos = false, vista 
             <div class="resumen-card-principal"><strong>${resumenKO.puntos}</strong><span>Knockout</span></div>
             <div class="resumen-card-principal"><strong>${resumen.puntos}</strong><span>Fase de Grupos</span></div>
             <div class="resumen-card-principal"><strong>${resumenClasificados.puntos}</strong><span>Clasificados</span></div>
-            <div class="resumen-card-principal"><strong>${resumen.exactos}</strong><span>Exactos</span></div>
+            <div class="resumen-card-principal"><strong>${activarStage2 ? resumen.exactos + resumenKO.exactos : resumen.exactos}</strong><span>Exactos</span></div>
             <div class="resumen-card-principal"><strong>${resumenEspeciales.puntos}</strong><span>Especiales</span></div>
             <div class="resumen-card-secundario"><strong>${resumen.diferencias}</strong><span>Diferencia</span></div>
             <div class="resumen-card-secundario"><strong>${resumen.ganadores}</strong><span>Ganador</span></div>

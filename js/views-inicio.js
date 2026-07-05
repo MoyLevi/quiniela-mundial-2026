@@ -10,10 +10,16 @@ function getTimestampPartidoInicio(p){
     if(!clave) return Number.MAX_SAFE_INTEGER;
 
     const [dia, mes, anio] = clave.split("/").map(Number);
-    const horaTexto = (p.hora || "00:00").toString().trim();
+    const horaTexto = (p.hora || p.Hora || "00:00").toString().trim().toLowerCase();
     const matchHora = horaTexto.match(/(\d{1,2}):(\d{2})/);
-    const hora = matchHora ? Number(matchHora[1]) : 0;
+    let hora = matchHora ? Number(matchHora[1]) : 0;
     const minuto = matchHora ? Number(matchHora[2]) : 0;
+
+    const esPM = /\b(p\.?m\.?|pm)\b/.test(horaTexto);
+    const esAM = /\b(a\.?m\.?|am)\b/.test(horaTexto);
+
+    if(esPM && hora < 12) hora += 12;
+    if(esAM && hora === 12) hora = 0;
 
     return new Date(anio, mes - 1, dia, hora, minuto).getTime();
 }
@@ -36,9 +42,9 @@ function crearHTMLAccesoFormularioPicks(){
         return `
             <div class="form-picks-home form-picks-home-abierto form-picks-home-clickable" onclick="mostrarFormularioPicks()" role="button" tabindex="0" onkeydown="if(event.key==='Enter' || event.key===' '){ event.preventDefault(); mostrarFormularioPicks(); }">
                 <div class="form-picks-abierto-contenido">
-                    <span class="form-picks-abierto-icono" aria-hidden="true">✍️</span>
+                    <img class="form-picks-abierto-icono" src="img/trionda.png" alt="" aria-hidden="true">
                     <div class="form-picks-abierto-textos">
-                        <strong>Picks Ronda de 32</strong>
+                        <strong>Picks Fase Final</strong>
                         <span>Captura y Modifica</span>
                     </div>
                 </div>
@@ -48,7 +54,7 @@ function crearHTMLAccesoFormularioPicks(){
 
     return `
         <div class="form-picks-home form-picks-home-cerrado">
-            <strong><img class="form-picks-icono-trionda" src="img/trionda.png" alt=""> Picks Ronda de 32</strong>
+            <strong><img class="form-picks-icono-trionda" src="img/trionda.png" alt=""> Picks Fase Final</strong>
             <span>Regresa Pronto</span>
         </div>
     `;
@@ -58,7 +64,7 @@ function mostrarFormularioPicks(){
     if(formPicksAbierto !== true){
         contenido.innerHTML = `
             <button onclick="mostrarInicio()" class="btnVolver">⬅ Regresar</button>
-            <h1>PICKS <span class="titulo-acento">RONDA DE 32</span></h1>
+            <h1>PICKS <span class="titulo-acento">FASE FINAL</span></h1>
             <div class="form-picks-card form-picks-cerrado">
                 <h2>Regresa Pronto</h2>
                 <p>El formulario todavía no está abierto.</p>
@@ -70,14 +76,14 @@ function mostrarFormularioPicks(){
 
     contenido.innerHTML = `
         <button onclick="mostrarInicio()" class="btnVolver">⬅ Regresar</button>
-        <h1>PICKS <span class="titulo-acento">RONDA DE 32</span></h1>
+        <h1>PICKS <span class="titulo-acento">FASE FINAL</span></h1>
         <p class="subtexto">Captura o modifica tus picks desde el formulario oficial.</p>
 
         <div class="form-picks-frame-wrap">
             <iframe
                 class="form-picks-frame"
                 src="${crearURLFormularioPicksLimpia()}"
-                title="Formulario Picks Ronda de 32"
+                title="Formulario Picks Fase Final"
                 loading="lazy"
             ></iframe>
         </div>
@@ -277,8 +283,8 @@ Bueno aqui sigo, me falta desarrollar los Standings de los Goleadores, e integra
     },
     {
         fecha: "27.Junio.2026 08:58pm",
-        titulo: "<b>⚽ Picks - Ronda de 32</b>",
-        texto: `<b>¡Ya puedes actualizar tus Picks para la Ronda de 32!</b><br><br>
+        titulo: "<b>⚽ Picks - Fase Final</b>",
+        texto: `<b>¡Ya puedes actualizar tus Picks para la Fase Final!</b><br><br>
 
         <b>1.</b> Puedes modificar tus Picks hasta <b>5 minutos antes</b> del inicio de <b>cada partido</b>.<br><br>
 

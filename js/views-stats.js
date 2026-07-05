@@ -480,13 +480,28 @@ function getMejorExactosKnockout(){
     )[0] || null;
 }
 
+function getRankingExactosCombinadosStats(){
+    const rankingGeneral = typeof getRankingGeneralCompleto === "function" ? getRankingGeneralCompleto(true) : [];
+
+    if(Array.isArray(rankingGeneral) && rankingGeneral.length){
+        return [...rankingGeneral].sort((a,b) =>
+            (b.exactos || 0) - (a.exactos || 0) ||
+            (b.puntos || 0) - (a.puntos || 0) ||
+            (a.nombre || "").localeCompare(b.nombre || "", "es", {numeric:true})
+        );
+    }
+
+    return getRankingRecord("exactos");
+}
+
 function crearHTMLRecordsStats(){
 
     const ranking = getRanking();
 
     const liderFaseGrupos = [...ranking].sort((a,b) => b.puntos - a.puntos || a.nombre.localeCompare(b.nombre, "es"))[0];
     const liderGeneral = (typeof getRankingGeneralCompleto === "function" ? getRankingGeneralCompleto() : ranking)[0];
-    const mejorExactos = [...ranking].sort((a,b) => b.exactos - a.exactos || b.puntos - a.puntos || a.nombre.localeCompare(b.nombre, "es"))[0];
+    const rankingExactosCombinados = getRankingExactosCombinadosStats();
+    const mejorExactos = rankingExactosCombinados[0];
     const mejorGanadores = [...ranking].sort((a,b) => b.ganadores - a.ganadores || b.puntos - a.puntos || a.nombre.localeCompare(b.nombre, "es"))[0];
     const mejorDiferencias = [...ranking].sort((a,b) => b.diferencias - a.diferencias || b.puntos - a.puntos || a.nombre.localeCompare(b.nombre, "es"))[0];
     const mejorExactosKO = getMejorExactosKnockout();
@@ -505,7 +520,7 @@ function crearHTMLRecordsStats(){
 
         <div class="records-grid">
             ${crearHTMLRecordCardStats(
-                "🔑",
+                "👑",
                 "Rey de Fase de Grupos",
                 liderFaseGrupos ? `${liderFaseGrupos.nombre} · ${liderFaseGrupos.puntos} pts` : "-",
                 "Toca para ir al standing de Fase de Grupos",
@@ -513,7 +528,7 @@ function crearHTMLRecordsStats(){
             )}
 
             ${crearHTMLRecordCardStats(
-                "👑",
+                "🎖️",
                 "Líder general",
                 liderGeneral ? `${liderGeneral.nombre} · ${liderGeneral.puntos} pts` : "-",
                 "Mayor puntaje acumulado"
@@ -592,7 +607,7 @@ function crearHTMLDetalleRecordUsuariosStats(tipo){
 
     const lista = tipo === "exactosKO"
         ? (typeof getRankingKO === "function" ? [...getRankingKO()].sort((a,b) => (b.marcador || 0) - (a.marcador || 0) || (b.puntos || 0) - (a.puntos || 0) || a.nombre.localeCompare(b.nombre, "es", {numeric:true})) : [])
-        : getRankingRecord(tipo);
+        : (tipo === "exactos" ? getRankingExactosCombinadosStats() : getRankingRecord(tipo));
 
     return `
         <button onclick="volverARecordsStats()" class="btnVolver">⬅ Volver</button>
