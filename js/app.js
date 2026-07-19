@@ -62,7 +62,7 @@ async function iniciarApp(){
     contenido.innerHTML = `
         <div class="loading">
             <h1><img class="balon-app balon-actualizando" src="img/trionda.png" alt="Balón"> Cargando quiniela...</h1>
-            <p>Consultando datos de Google Sheets</p>
+            <p>Cargando archivo histórico</p>
         </div>
     `;
 
@@ -105,7 +105,7 @@ async function iniciarApp(){
         contenido.innerHTML = `
             <div class="error-card">
                 <h1>⚠️ Error al cargar datos</h1>
-                <p>Revisa la conexión o los enlaces CSV de Google Sheets.</p>
+                <p>No fue posible cargar el archivo histórico.</p>
             </div>
             ${getFooterCopyright()}
         `;

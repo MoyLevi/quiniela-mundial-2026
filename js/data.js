@@ -1,5 +1,5 @@
 
-const CACHE_TABLAS_FIJAS_VERSION = "v4.3.5";
+const CACHE_TABLAS_FIJAS_VERSION = "v4.3.6";
 
 function getCacheTablaFijaKey(nombre){
     return `quiniela_${CACHE_TABLAS_FIJAS_VERSION}_${nombre}`;
@@ -216,6 +216,12 @@ async function cargarLugaresPro(){
 
 async function cargarKnockout(){
 
+    const cache = leerTablaFijaLocalStorage("Knockout");
+    if(cache){
+        knockout = cache;
+        return;
+    }
+
     const res = await fetch(urlKnockout);
     const text = await res.text();
 
@@ -249,9 +255,17 @@ async function cargarKnockout(){
             esKO: true
         };
     });
+
+    guardarTablaFijaLocalStorage("Knockout", knockout);
 }
 
 async function cargarRankKO(){
+
+    const cache = leerTablaFijaLocalStorage("RankKO");
+    if(cache){
+        rankKO = cache;
+        return;
+    }
 
     const res = await fetch(urlRankKO);
     const text = await res.text();
@@ -274,9 +288,17 @@ async function cargarRankKO(){
             equipo: obj["Equipo"]
         };
     });
+
+    guardarTablaFijaLocalStorage("RankKO", rankKO);
 }
 
 async function cargarPicksKO(){
+
+    const cache = leerTablaFijaLocalStorage("PicksKO");
+    if(cache){
+        picksKO = cache;
+        return;
+    }
 
     const res = await fetch(urlPicksKO);
     const text = await res.text();
@@ -307,31 +329,37 @@ async function cargarPicksKO(){
             esKO: true
         };
     });
+
+    guardarTablaFijaLocalStorage("PicksKO", picksKO);
 }
 
 
 async function cargarForm(){
+    const cache = leerTablaFijaLocalStorage("Form");
+    if(cache){
+        formPicksAbierto = cache[0]?.abierto === true;
+        return;
+    }
+
     formPicksAbierto = false;
 
     try{
         if(typeof urlForm !== "string" || !urlForm){
+            guardarTablaFijaLocalStorage("Form", [{ abierto: false }]);
             return;
         }
 
-        const res = await fetch(urlForm, { cache: "no-store" });
+        const res = await fetch(urlForm);
         if(!res.ok) throw new Error(`Form ${res.status}`);
 
         const text = await res.text();
         const data = parseCSV(text);
-
-        // Estructura esperada:
-        // Abrir Formulario
-        // NO / SI
         const valorDirecto = (data?.[1]?.[0] || "").toString().trim().toLowerCase();
         const valorFlexible = data.flat().find(c => /^(si|sí|no)$/i.test((c || "").toString().trim())) || "";
         const valor = valorDirecto || valorFlexible.toString().trim().toLowerCase();
 
         formPicksAbierto = valor === "si" || valor === "sí";
+        guardarTablaFijaLocalStorage("Form", [{ abierto: formPicksAbierto }]);
     }
     catch(error){
         console.warn("No se pudo cargar configuración Form:", error);
@@ -479,6 +507,12 @@ function parsearGoleadoresCSV(texto){
 }
 
 async function cargarGoleadores(){
+    const cache = leerTablaFijaLocalStorage("Goleadores");
+    if(cache){
+        goleadores = cache;
+        return;
+    }
+
     try{
         if(typeof urlGoleadores !== "string" || !urlGoleadores){
             goleadores = [];
@@ -490,6 +524,7 @@ async function cargarGoleadores(){
 
         const text = await res.text();
         goleadores = parsearGoleadoresCSV(text);
+        guardarTablaFijaLocalStorage("Goleadores", goleadores);
     }
     catch(error){
         console.warn("No se pudieron cargar goleadores:", error);
@@ -591,6 +626,12 @@ function parsearVideosCSV(texto){
 }
 
 async function cargarVideos(){
+    const cache = leerTablaFijaLocalStorage("Videos");
+    if(cache){
+        videos = cache;
+        return;
+    }
+
     try{
         if(typeof urlVideos !== "string" || !urlVideos){
             videos = [];
@@ -600,6 +641,7 @@ async function cargarVideos(){
         if(!res.ok) throw new Error(`Videos ${res.status}`);
         const text = await res.text();
         videos = parsearVideosCSV(text);
+        guardarTablaFijaLocalStorage("Videos", videos);
     }
     catch(error){
         console.warn("No se pudieron cargar videos:", error);

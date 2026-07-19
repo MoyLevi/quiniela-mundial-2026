@@ -1,10 +1,3 @@
-
-
-function crearURLFormularioPicksLimpia(){
-    const separador = urlFormularioPicks.includes("?") ? "&" : "?";
-    return `${urlFormularioPicks}${separador}ts=${Date.now()}`;
-}
-
 function getTimestampPartidoInicio(p){
     const clave = typeof obtenerClaveFechaPartido === "function" ? obtenerClaveFechaPartido(p) : "";
     if(!clave) return Number.MAX_SAFE_INTEGER;
@@ -36,61 +29,36 @@ function getProximosPartidosKOInicio(){
 }
 
 function crearHTMLAccesoFormularioPicks(){
-    const abierto = formPicksAbierto === true;
-
-    if(abierto){
-        return `
-            <div class="form-picks-home form-picks-home-abierto form-picks-home-clickable" onclick="mostrarFormularioPicks()" role="button" tabindex="0" onkeydown="if(event.key==='Enter' || event.key===' '){ event.preventDefault(); mostrarFormularioPicks(); }">
-                <div class="form-picks-abierto-contenido">
-                    <img class="form-picks-abierto-icono" src="img/trionda.png" alt="" aria-hidden="true">
-                    <div class="form-picks-abierto-textos">
-                        <strong>Picks Fase Final</strong>
-                        <span>Captura y Modifica</span>
-                    </div>
+    return `
+        <div class="form-picks-home form-picks-home-abierto form-picks-home-clickable" onclick="mostrarDespedidaPicks()" role="button" tabindex="0" onkeydown="if(event.key==='Enter' || event.key===' '){ event.preventDefault(); mostrarDespedidaPicks(); }">
+            <div class="form-picks-abierto-contenido">
+                <img class="form-picks-abierto-icono" src="img/trionda.png" alt="" aria-hidden="true">
+                <div class="form-picks-abierto-textos">
+                    <strong>Picks Fase Final</strong>
+                    <span>Nos vemos en 2030!</span>
                 </div>
             </div>
-        `;
-    }
-
-    return `
-        <div class="form-picks-home form-picks-home-cerrado">
-            <strong><img class="form-picks-icono-trionda" src="img/trionda.png" alt=""> Picks Fase Final</strong>
-            <span>Regresa Pronto</span>
         </div>
     `;
 }
 
-function mostrarFormularioPicks(){
-    if(formPicksAbierto !== true){
-        contenido.innerHTML = `
-            <button onclick="mostrarInicio()" class="btnVolver">⬅ Regresar</button>
-            <h1>PICKS <span class="titulo-acento">FASE FINAL</span></h1>
-            <div class="form-picks-card form-picks-cerrado">
-                <h2>Regresa Pronto</h2>
-                <p>El formulario todavía no está abierto.</p>
-            </div>
-            ${getFooterCopyright()}
-        `;
-        return;
-    }
-
+function mostrarDespedidaPicks(){
     contenido.innerHTML = `
         <button onclick="mostrarInicio()" class="btnVolver">⬅ Regresar</button>
         <h1>PICKS <span class="titulo-acento">FASE FINAL</span></h1>
-        <p class="subtexto">Captura o modifica tus picks desde el formulario oficial.</p>
 
-        <div class="form-picks-frame-wrap">
-            <iframe
-                class="form-picks-frame"
-                src="${crearURLFormularioPicksLimpia()}"
-                title="Formulario Picks Fase Final"
-                loading="lazy"
-            ></iframe>
+        <div class="form-picks-home form-picks-home-abierto form-picks-home-despedida">
+            <div class="form-picks-abierto-contenido">
+                <img class="form-picks-abierto-icono" src="img/trionda.png" alt="" aria-hidden="true">
+                <div class="form-picks-abierto-textos">
+                    <strong>Nos vemos en 2030!</strong>
+                    <span>Gracias por participar</span>
+                </div>
+            </div>
         </div>
 
         ${getFooterCopyright()}
     `;
-
     window.scrollTo({ top:0, behavior:"smooth" });
 }
 
@@ -99,11 +67,12 @@ function mostrarInicio(){
     const ranking = typeof getRankingGeneralCompleto === "function" ? getRankingGeneralCompleto() : getRanking();
     const lider = ranking[0];
     const totalPicksCapturados = (Array.isArray(picks) ? picks.length : 0) + (Array.isArray(picksKO) ? picksKO.length : 0);
-    const golesMarcados = (Array.isArray(partidos) ? partidos : []).reduce((total, p) => {
+    const sumarGolesSinPenales = (lista) => (Array.isArray(lista) ? lista : []).reduce((total, p) => {
         const gl = p.golesLoc !== "" && p.golesLoc !== undefined ? Number(p.golesLoc) : NaN;
         const gv = p.golesVis !== "" && p.golesVis !== undefined ? Number(p.golesVis) : NaN;
         return total + (Number.isFinite(gl) ? gl : 0) + (Number.isFinite(gv) ? gv : 0);
     }, 0);
+    const golesMarcados = sumarGolesSinPenales(partidos) + sumarGolesSinPenales(knockout);
 
     const proximos = getProximosPartidosKOInicio();
 
