@@ -1,11 +1,10 @@
 {
-  "version": "4.3.5",
-  "date": "2026-07-01",
+  "version": "4.3.6",
+  "date": "2026-07-19",
   "notes": [
-    "Recupera mejoras visuales de Picks Fase Final en Inicio.",
-    "Próximos partidos ordenados por fecha y hora con soporte a.m./p.m.",
-    "Marcas destacadas y detalles de usuario suman exactos de Fase de Grupos + Knockout.",
-    "Datos destacados suma porterías en cero de Fase de Grupos + Knockout.",
-    "Se conserva la corrección de push/notificaciones de la versión anterior."
+    "Modo histórico: las tablas se leen desde Local Storage y solo se descargan si todavía no existe una copia local.",
+    "Se congelan Partidos, Picks, Usuarios, LugaresPro, Knockout, RankKO, PicksKO, Form, Goleadores y Videos.",
+    "Goles marcados suma Fase de Grupos y Knockout sin contar tandas de penales.",
+    "Picks Fase Final ya no abre el formulario y muestra el mensaje Nos vemos en 2030."
   ]
 }
